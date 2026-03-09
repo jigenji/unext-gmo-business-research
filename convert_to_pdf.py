@@ -2,8 +2,10 @@
 import markdown
 from weasyprint import HTML
 
-INPUT = "gmo_business_segment_analysis.md"
-OUTPUT = "gmo_business_segment_analysis.pdf"
+import sys
+
+INPUT = sys.argv[1] if len(sys.argv) > 1 else "gmo_business_segment_analysis.md"
+OUTPUT = INPUT.replace(".md", ".pdf")
 
 with open(INPUT, "r", encoding="utf-8") as f:
     md_text = f.read()
