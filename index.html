@@ -259,13 +259,13 @@ canvas {
   </div>
 
   <div class="control">
-    <label>価格下落率 (δ) <span class="val" id="v_delta">10%</span></label>
+    <label title="[推定値] H100: $8/hr→$2-3/hrの60-70%下落から定常状態を推定。出典: SiliconData">価格下落率 (δ) <span class="val" id="v_delta">10%</span></label>
     <input type="range" id="s_delta" min="0" max="30" step="1" value="10" oninput="update()">
     <div class="range-labels"><span>0%</span><span>30%</span></div>
   </div>
 
   <div class="control">
-    <label>新規参入 (社/年) <span class="val" id="v_entry">3</span></label>
+    <label title="[公開情報] 2024-25年実績: GMO,さくら,KDDI,ハイレゾ,ルチラ,SB→6社/2年≈3社/年">新規参入 (社/年) <span class="val" id="v_entry">3</span></label>
     <input type="range" id="s_entry" min="0" max="10" step="0.5" value="3" oninput="update()">
     <div class="range-labels"><span>0</span><span>10</span></div>
   </div>
@@ -273,25 +273,25 @@ canvas {
   <div class="section-label">事業パラメータ</div>
 
   <div class="control">
-    <label>初期稼働率 (U₀) <span class="val" id="v_u0">80%</span></label>
+    <label title="[推定値] GMO月次黒字化達成→損益分岐(~50%)超。チューリング長期契約等から80%推定。業界平均は15-30%">初期稼働率 (U₀) <span class="val" id="v_u0">80%</span></label>
     <input type="range" id="s_u0" min="30" max="95" step="1" value="80" oninput="update()">
     <div class="range-labels"><span>30%</span><span>95%</span></div>
   </div>
 
   <div class="control">
-    <label>GPU月額単価 (P₀) <span class="val" id="v_p0">47.5万円</span></label>
+    <label title="[実績値] GMO専有プラン380万円/月÷8GPU=47.5万円。出典: gpucloud.gmo/price/">GPU月額単価 (P₀) <span class="val" id="v_p0">47.5万円</span></label>
     <input type="range" id="s_p0" min="20" max="80" step="0.5" value="47.5" oninput="update()">
     <div class="range-labels"><span>20万</span><span>80万</span></div>
   </div>
 
   <div class="control">
-    <label>初期投資 (CAPEX) <span class="val" id="v_capex">100億円</span></label>
+    <label title="[実績値] GMO 2024年2月発表。出典: ITmedia 2024/02/13">初期投資 (CAPEX) <span class="val" id="v_capex">100億円</span></label>
     <input type="range" id="s_capex" min="30" max="200" step="5" value="100" oninput="update()">
     <div class="range-labels"><span>30億</span><span>200億</span></div>
   </div>
 
   <div class="control">
-    <label>初期GPU数 <span class="val" id="v_ngpu">768基</span></label>
+    <label title="[実績値] 96ノード×8GPU=768基。TOP500世界37位。出典: GMO News">初期GPU数 <span class="val" id="v_ngpu">768基</span></label>
     <input type="range" id="s_ngpu" min="100" max="2000" step="50" value="768" oninput="update()">
     <div class="range-labels"><span>100</span><span>2000</span></div>
   </div>
@@ -299,19 +299,19 @@ canvas {
   <div class="section-label">コスト</div>
 
   <div class="control">
-    <label>電力単価 <span class="val" id="v_elec">20円/kWh</span></label>
+    <label title="[公開情報] 産業用17.5円/kWh+再エネ賦課金3.98円-政府補助1.20円≈20円。出典: Statista, METI">電力単価 <span class="val" id="v_elec">20円/kWh</span></label>
     <input type="range" id="s_elec" min="8" max="35" step="1" value="20" oninput="update()">
     <div class="range-labels"><span>8円</span><span>35円</span></div>
   </div>
 
   <div class="control">
-    <label>助成金 <span class="val" id="v_sub">19.3億円</span></label>
+    <label title="[実績値] 経産省クラウドプログラム認定(2024/4)。最大約19.3億円。出典: ITmedia 2024/04/19">助成金 <span class="val" id="v_sub">19.3億円</span></label>
     <input type="range" id="s_sub" min="0" max="100" step="1" value="19" oninput="update()">
     <div class="range-labels"><span>0億</span><span>100億</span></div>
   </div>
 
   <div class="control">
-    <label>割引率 (WACC) <span class="val" id="v_wacc">8%</span></label>
+    <label title="[推定値] GMO全社WACC推定4-6%+GPU事業リスクプレミアム2-4%=8%。全社WACCとしては高い。出典: Yahoo Finance 9449.T">割引率 (WACC) <span class="val" id="v_wacc">8%</span></label>
     <input type="range" id="s_wacc" min="3" max="15" step="0.5" value="8" oninput="update()">
     <div class="range-labels"><span>3%</span><span>15%</span></div>
   </div>
@@ -396,14 +396,16 @@ canvas {
         <div class="item"><span>固定資産</span><span>GPU</span></div>
         <div class="item"><span>固定費</span><span>減価償却+電力</span></div>
         <div class="item"><span>損益分岐</span><span id="cmp_be">—</span></div>
-        <div class="item"><span>業界平均稼働率</span><span style="color:var(--red);font-weight:700">40%</span></div>
+        <div class="item"><span>業界平均稼働率</span><span style="color:var(--red);font-weight:700">15-30%</span></div>
         <div class="item"><span>陳腐化</span><span>2-3年</span></div>
         <div class="item"><span>流動性</span><span>低い</span></div>
       </div>
     </div>
     <p style="font-size:11px;color:var(--gray);margin-top:10px">
       両ビジネスの利益は「固定費×稼働率」で決まる。GPU Cloudはコンサルより陳腐化が速く(2年 vs 3-5年)、
-      業界平均稼働率(40%)が損益分岐点を下回るため、<strong>構造的に過半数が赤字</strong>になる。
+      業界平均稼働率(15-30%)が損益分岐点を大幅に下回るため、<strong>構造的に大多数が赤字</strong>になる。
+      <br>出典: <a href="https://ecosystem.aethir.com/blog-posts/monetize-idle-gpus-in-2025-7-proven-strategies-for-cloud-hosts">Aethir</a>,
+      <a href="https://www.thundercompute.com/blog/ai-gpu-rental-market-trends">Thunder Compute</a>
     </p>
   </div>
 

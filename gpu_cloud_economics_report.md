@@ -1,7 +1,7 @@
 # GPUクラウド事業 数理経済モデル分析レポート
 ## ～ コンサルティングビジネスとの構造的同型性の観点から ～
 
-**作成日**: 2026年3月9日
+**作成日**: 2026年3月10日（パラメータ根拠追記・検証済み）
 
 ---
 
@@ -41,7 +41,7 @@ GMO GPUクラウド事業の収益構造を数理モデルに落とし込み、�
 | **固定費の本質** | 給与（使わなくても発生） | 減価償却 + 電力 |
 | **稼働率の意味** | ビラブルレート | GPU利用率 |
 | **損益分岐稼働率** | 60-70% | 50-74% |
-| **業界平均稼働率** | 65-75% | **40% (!)** |
+| **業界平均稼働率** | 65-75%（[出典](https://www.mosaicapp.com/post/billable-utilization-rate-statistics-in-professional-services-firms)） | **15-30% (!!)** （[出典](https://ecosystem.aethir.com/blog-posts/monetize-idle-gpus-in-2025-7-proven-strategies-for-cloud-hosts)） |
 | **陳腐化サイクル** | 3-5年（スキル） | 2-3年（GPU世代） |
 | **限界費用** | ほぼゼロ | 電力費（低い） |
 | **資産の流動性** | 高い（転職リスク） | 低い（中古市場限定） |
@@ -71,7 +71,7 @@ N(t) = N₀ + n_entry × t    ... 競合企業数
 P(t) = P₀ × (1 - δ)^t × clip(ED(t), floor, 1.3)
 ```
 
-- `P₀ = 47.5万円/GPU/月`（GMO専有プラン準拠）
+- `P₀ = 47.5万円/GPU/月`（**[実績値]** GMO専有プラン380万円/8GPU。出典: [GMO GPU Cloud料金](https://gpucloud.gmo/price/)）
 - `δ`: 技術陳腐化による年間価格下落率
 - `ED(t)`: 需給調整ファクター
 - 需要>供給なら価格維持、供給>需要なら下落加速
@@ -103,9 +103,9 @@ E(t) = Σᵢ Nᵢ × Wᵢ × PUE × 8760 × r_e / 10⁸    [億円]
 Dep(t) = CAPEX_net / T_life                        [億円]
 ```
 
-- `Wᵢ`: GPU種別iの消費電力（H200: 700W, B300: 1200W）
-- `PUE`: 1.30
-- `r_e`: 電力単価 20円/kWh
+- `Wᵢ`: GPU種別iの消費電力（H200: 700W **[実績値]**, B300: 1200W **[実績値/HGX版]**)
+- `PUE`: 1.30 **[公開情報]**（日本の最新DC PUE 1.2-1.4の中間値）
+- `r_e`: 電力単価 20円/kWh **[公開情報]**（日本産業用電力17.5円+再エネ賦課金の中間値）
 
 #### キャッシュフロー・投資指標
 
@@ -120,36 +120,52 @@ IRR    : NPV(IRR) = 0
 
 ## 第2章: パラメータ設定（GMO実績ベース）
 
+各パラメータには以下の信頼度分類を付与:
+- **[実績値]**: GMO公表値または公的機関の確定データ
+- **[公開情報]**: 業界レポート・公開データから導出
+- **[推定値]**: 公開情報を基にした推定・仮定（検証が必要）
+
 ### 2.1 投資パラメータ
 
-| パラメータ | 値 | 根拠 |
-|---|---|---|
-| 初期投資（H200 768基） | 100.0億円 | GMO公表値 |
-| 追加投資（H200 256基） | 15.0億円 | 推定 |
-| B300投資（200基） | 30.0億円 | 推定 |
-| 経産省助成金 | 19.3億円 | 公表値 |
-| 法定耐用年数 | 5年 | 国税庁 |
+| パラメータ | 値 | 分類 | 根拠・導出方法 | 出典 |
+|---|---|---|---|---|
+| 初期投資（H200 768基） | 100.0億円 | **[実績値]** | GMOが2024年2月に発表した投資計画「NVIDIAから調達するGPUサーバー等の設備に100億円を投資」 | [ITmedia](https://www.itmedia.co.jp/news/articles/2402/13/news177.html), [Publickey](https://www.publickey1.jp/blog/24/aigpu1000kddi1000gmo100.html) |
+| 追加投資（H200 256基） | 15.0億円 | **[推定値]** | H200単価$30K-$40K × 256基 ≈ $7.7M-$10.2M。サーバー構成込みで約15億円と推計 | [GMO PDF](https://group.gmo/en/pdf/news/gmo_news_835.pdf) |
+| B300投資（200基） | 30.0億円 | **[推定値]** | B300推定単価$55K-$70K × 200基 ≈ $11M-$14M。液冷設備込みで約30億円と推計。B300単体価格は非公開 | [B300スペック](https://www.server-parts.eu/post/nvidia-b300-gpu-specs) |
+| 経産省助成金 | 19.3億円 | **[実績値]** | 経済安全保障推進法に基づくクラウドプログラム認定（2024年4月15日）。最大約19.3億円 | [ITmedia](https://www.itmedia.co.jp/news/articles/2404/19/news123.html), [Impress](https://www.watch.impress.co.jp/docs/news/1585751.html) |
+| 法定耐用年数 | 5年 | **[実績値]** | 国税庁の法定耐用年数表「電子計算機（サーバー用のもの）」= 5年。一般PCは4年 | [Kurojica](https://kurojica.com/server/blog/5948/), [Mikata](https://www.mikataconsulting.com/gpuサーバー投資による節税方法について解説【2024年/) |
+| GPU基数（初期768基） | 768基 | **[実績値]** | 96ノード × 8 GPU/ノード = 768基。TOP500世界37位・国内6位（38.06 PFLOPS） | [GMO News](https://internet.gmo/en/news/article/27/), [TOP500](https://internet.gmo/en/news/article/26/) |
 
 ### 2.2 運営パラメータ
 
-| パラメータ | 値 | 根拠 |
-|---|---|---|
-| 初期稼働率 U₀ | 80% | GMO月次黒字化＝50%超から推定 |
-| GPU月額単価 P₀ | 47.5万円 | 専有プラン380万/8GPU |
-| 電力単価 | 20円/kWh | 日本高圧電力平均 |
-| PUE | 1.30 | 福岡DC推定 |
-| 人件費 | 2.4億円/年 | 30名×800万円 |
-| DC賃料 | 2.0億円/年 | 借用型DC |
-| その他固定費 | 4.2億円/年 | 保守+NW+SW+営業+管理 |
+| パラメータ | 値 | 分類 | 根拠・導出方法 | 出典 |
+|---|---|---|---|---|
+| 初期稼働率 U₀ | 80% | **[推定値]** | GMO「月次黒字化達成」→ 損益分岐稼働率(~50%)超過は確定。チューリング4年32億円契約等から80%と推定。業界平均15-30%を大幅に上回る | GMO IR発表 |
+| GPU月額単価 P₀ | 47.5万円 | **[実績値]** | GMO GPU Cloud専有プラン: 月額380万円/台(8GPU) ÷ 8 = 47.5万円/GPU | [GMO料金](https://gpucloud.gmo/price/) |
+| H200消費電力 | 0.70 kW | **[実績値]** | NVIDIA H200 SXM TDP = 700W（公式仕様） | [NVIDIA H200](https://www.nvidia.com/en-us/data-center/h200/), [TRG DC](https://www.trgdatacenters.com/resource/h200-power-consumption/) |
+| B300消費電力 | 1.20 kW | **[実績値]** | NVIDIA DGX B300 HGX版 TDP = 1,200W。※GB300ラックスケール版は1,400W | [DGX B300](https://docs.nvidia.com/dgx/dgxb300-user-guide/), [Tom's HW](https://www.tomshardware.com/tech-industry/artificial-intelligence/nvidias-next-gen-b300-gpus-have-1-400w-tdp) |
+| 電力単価 | 20円/kWh | **[公開情報]** | 日本の産業用電力(~17.5円/kWh) + 再エネ賦課金(3.98円/kWh) - 政府補助(-1.20円/kWh) ≈ 20円/kWhの中間値 | [Statista](https://www.statista.com/statistics/1220094/japan-electricity-cost-industry/), [METI](https://www.meti.go.jp/english/press/2025/0321_001.html) |
+| PUE | 1.30 | **[公開情報]** | 日本の最新DC PUE範囲1.2-1.4（JDCC）の中間値。2026年4月規制でPUE≤1.4が要求 | [JDCC](https://www.jdcc.or.jp/english/pue.html), [Score Group](https://www.score-grp.com/en/post/data-center-pue-in-2026) |
+| 人件費 | 2.4億円/年 | **[推定値]** | 30名 × 平均年収800万円と仮定。個別費目はGMO非公開 | 業界水準からの推計 |
+| DC賃料 | 2.0億円/年 | **[推定値]** | 福岡の借用型DC。個別費目はGMO非公開 | 業界水準からの推計 |
+| その他固定費 | 4.2億円/年 | **[推定値]** | 保守1.5+NW0.8+SW0.4+営業1.0+管理0.5億円。合計コスト(約24億円)との整合から逆算 | レポート記載の固定費17億+変動費7億から導出 |
 
 ### 2.3 市場パラメータ
 
-| パラメータ | ベース | 悲観 | 楽観 | 根拠 |
+| パラメータ | ベース | 悲観 | 楽観 | 分類 | 根拠・導出方法 | 出典 |
+|---|---|---|---|---|---|---|
+| 需要成長率 g_d | 25% | 20% | 40% | **[公開情報]** | 複数調査会社CAGR推定の保守的下限。MarketsandMarkets: 26.5%, Fortune BI: 35.8%, Mordor: 28.74%, Grand View: 16.0% → 大多数26-36%に集中、25%を保守値として採用 | [MM](https://www.marketsandmarkets.com/Market-Reports/gpu-as-a-service-market-153834402.html), [FBI](https://www.fortunebusinessinsights.com/gpu-as-a-service-market-107797), [MI](https://www.mordorintelligence.com/industry-reports/gpu-as-a-service-market) |
+| 供給成長率 g_s | 35% | 50% | 30% | **[推定値]** | 直接統計なし。間接データから推定: 300社以上新規参入、H100価格60-70%下落（供給>需要の証拠）。アジア太平洋GPU容量は29.78% CAGRで拡大 | [Introl](https://introl.com/blog/gpu-cloud-price-collapse-h100-market-december-2025) |
+| 価格下落率 δ | 10% | 18% | 5% | **[推定値]** | H100は$8/hr→$2-3/hrへ60-70%下落（年率40-50%）。ただし初期バブル崩壊を含む異常値。定常状態として10%/年を想定 | [SiliconData](https://www.silicondata.com/blog/h100-rental-price-over-time-2023-to-2025-a-complete-market-analysis) |
+| 新規参入 | 3社/年 | 5社/年 | 2社/年 | **[公開情報]** | 2024-25年の実績: GMO, さくら(拡張), KDDI, ハイレゾ(拡張), ルチラ(拡張), SB(拡張) → 6社/2年 ≈ 3社/年 | [NVIDIA Japan](https://nvidianews.nvidia.com/news/japan-cloud-leaders-build-nvidia-ai-infrastructure-to-transform-industries) |
+
+### 2.4 財務パラメータ
+
+| パラメータ | 値 | 分類 | 根拠・導出方法 | 出典 |
 |---|---|---|---|---|
-| 需要成長率 g_d | 25% | 20% | 40% | 富士キメラ/IDC |
-| 供給成長率 g_s | 35% | 50% | 30% | 参入企業数から推定 |
-| 価格下落率 δ | 10% | 18% | 5% | H100価格トレンド |
-| 新規参入 | 3社/年 | 5社/年 | 2社/年 | 実績+予測 |
+| WACC | 8% | **[推定値]** | GMO(9449.T) β=0.47 → CAPM: 1.0%+0.47×6.0%=3.8%。全社WACC推定4-6%。GPU事業は新規・資本集約的のためプロジェクトリスクプレミアム+2-4%を加算し8%。**全社WACCとしては高い。事業単体リスク評価として使用** | [Yahoo Finance](https://sg.finance.yahoo.com/quote/9449.T/), [Damodaran](https://pages.stern.nyu.edu/adamodar/pc/datasets/waccJapan.xls) |
+| 法人税率 τ | 30% | **[実績値]** | 日本の大企業実効税率30.62%（2025年度）の近似値。2026年度以降は防衛特別税で31.52% | [PwC](https://taxsummaries.pwc.com/japan/corporate/taxes-on-corporate-income), [JETRO](https://www.jetro.go.jp/en/invest/setting_up/section3/page3.html) |
+| インフレ率 π | 2% | **[公開情報]** | 日銀の物価安定目標2% | 日本銀行 |
 
 ---
 
@@ -310,9 +326,11 @@ GPU Cloudの利益 = (GPU数 × 稼働率 × 時間単価 × 稼働時間) − �
 |---|---|---|
 | **陳腐化速度** | 3-5年（リスキリング可能） | 2年（GPU交換必須） |
 | **資産の流動性** | 高い（人は転職/移動可能） | 低い（中古GPU市場は限定的） |
-| **業界平均稼働率 vs 損益分岐点** | 65-75% > 60-70% → **多くが黒字** | 40% < 50-74% → **多くが赤字** |
+| **業界平均稼働率 vs 損益分岐点** | 65-75% > 60-70% → **多くが黒字** | **15-30%** < 50-74% → **大多数が赤字** |
 
-**最も危険な示唆**: コンサル業界は「業界平均稼働率 > 損益分岐稼働率」なので大半の企業が生存できる。GPUクラウドは「業界平均稼働率 40% < 損益分岐稼働率 50-74%」なので**過半数の事業者が構造的に赤字**になる。
+**最も危険な示唆**: コンサル業界は「業界平均稼働率 > 損益分岐稼働率」なので大半の企業が生存できる。GPUクラウドは「業界平均稼働率 **15-30%** < 損益分岐稼働率 50-74%」なので**大多数の事業者が構造的に赤字**になる。
+
+> **GPU稼働率の根拠**: 業界レポートによると、集中型クラウド環境の平均GPU稼働率は15-30%。CoreWeaveのような長期契約中心の事業者は85%超だが、独立系は30-50%、業界全体では「稼働率危機」と呼ばれる状況。出典: [Aethir](https://ecosystem.aethir.com/blog-posts/monetize-idle-gpus-in-2025-7-proven-strategies-for-cloud-hosts), [Thunder Compute](https://www.thundercompute.com/blog/ai-gpu-rental-market-trends)
 
 ### 6.3 勝つための条件（コンサルのアナロジーから）
 
@@ -344,7 +362,7 @@ GPU Cloudの利益 = (GPU数 × 稼働率 × 時間単価 × 稼働時間) − �
 
 1. **需給バランスが全てを決める**: モデルで最も影響の大きい変数は「供給成長率」。つまり「競合がどれだけ参入するか」が事業の成否を分ける
 
-2. **稼働率50%が生存ライン**: 業界平均40%は「過半数が赤字」を意味する。チューリング型の長期契約で稼働率の「床」を確保することが不可欠
+2. **稼働率50%が生存ライン**: 業界平均15-30%は「大多数が赤字」を意味する。チューリング型の長期契約で稼働率の「床」を確保することが不可欠
 
 3. **3年以内の投資回収を設計すべき**: GPU世代交代（2年サイクル）を考えると、5年の法定耐用年数ではなく、3-4年の経済的耐用年数で回収計画を立てる必要がある
 
@@ -354,7 +372,7 @@ GPU Cloudの利益 = (GPU数 × 稼働率 × 時間単価 × 稼働時間) − �
 
 GMOは以下の点でモデルの「楽観寄り」に位置している:
 
-- **月次黒字化達成** → 稼働率50%超（業界平均40%を上回る）
+- **月次黒字化達成** → 稼働率50%超（業界平均15-30%を大幅に上回る）
 - **チューリング契約** → 4年32億円の長期アンカーテナント
 - **B300国内最速導入** → プレミアム単価の維持
 - **Dell提携** → GPU調達の安定化
@@ -364,24 +382,53 @@ GMOは以下の点でモデルの「楽観寄り」に位置している:
 
 ---
 
-## 付録: モデルの変数一覧
+## 付録A: モデルの変数一覧（根拠・出典付き）
 
-| 変数 | 記号 | ベース値 | 単位 | 説明 |
-|---|---|---|---|---|
-| GPU月額単価 | P₀ | 47.5 | 万円 | 専有プラン基準 |
-| 価格下落率 | δ | 10 | %/年 | 技術陳腐化 |
-| 初期稼働率 | U₀ | 80 | % | GMO推定 |
-| 競合感度 | α | 1.5 | %/社 | 新規参入あたり |
-| 需要成長率 | g_d | 25 | %/年 | CAGR |
-| 供給成長率 | g_s | 35 | %/年 | CAGR |
-| 初期投資 | CAPEX | 100 | 億円 | H200 768基 |
-| 助成金 | Subsidy | 19.3 | 億円 | 経産省 |
-| 法定耐用年数 | T_life | 5 | 年 | 国税庁 |
-| 電力単価 | r_e | 20 | 円/kWh | 高圧 |
-| PUE | PUE | 1.30 | - | 福岡DC |
-| 割引率 | WACC | 8 | % | 加重平均資本コスト |
-| 税率 | τ | 30 | % | 実効税率 |
-| インフレ率 | π | 2 | %/年 | - |
+| 変数 | 記号 | ベース値 | 単位 | 分類 | 根拠 | 主要出典 |
+|---|---|---|---|---|---|---|
+| GPU月額単価 | P₀ | 47.5 | 万円 | **実績値** | GMO専有プラン380万/8GPU | [GMO料金](https://gpucloud.gmo/price/) |
+| 価格下落率 | δ | 10 | %/年 | **推定値** | H100の60-70%下落から定常状態を推定 | [SiliconData](https://www.silicondata.com/blog/h100-rental-price-over-time-2023-to-2025-a-complete-market-analysis) |
+| 初期稼働率 | U₀ | 80 | % | **推定値** | GMO月次黒字化(>50%)＋長期契約から推定 | GMO IR |
+| 競合感度 | α | 1.5 | %/社 | **推定値** | モデル固有パラメータ。直接データなし | モデル仮定 |
+| 需要成長率 | g_d | 25 | %/年 | **公開情報** | 4社の調査会社CAGR(16-36%)の保守的下限 | [MM](https://www.marketsandmarkets.com/Market-Reports/gpu-as-a-service-market-153834402.html) |
+| 供給成長率 | g_s | 35 | %/年 | **推定値** | 価格下落速度と参入数から逆算。直接統計なし | [Introl](https://introl.com/blog/gpu-cloud-price-collapse-h100-market-december-2025) |
+| 初期投資 | CAPEX | 100 | 億円 | **実績値** | GMO 2024年2月発表 | [ITmedia](https://www.itmedia.co.jp/news/articles/2402/13/news177.html) |
+| 助成金 | Subsidy | 19.3 | 億円 | **実績値** | 経産省クラウドプログラム認定(2024/4) | [ITmedia](https://www.itmedia.co.jp/news/articles/2404/19/news123.html) |
+| GPU基数 | N_gpu | 768 | 基 | **実績値** | 96ノード×8GPU。TOP500 37位 | [GMO News](https://internet.gmo/en/news/article/27/) |
+| H200消費電力 | W_H200 | 0.70 | kW | **実績値** | NVIDIA H200 SXM TDP 700W | [NVIDIA](https://www.nvidia.com/en-us/data-center/h200/) |
+| B300消費電力 | W_B300 | 1.20 | kW | **実績値** | DGX B300 HGX版 1,200W (GB300は1,400W) | [NVIDIA DGX](https://docs.nvidia.com/dgx/dgxb300-user-guide/) |
+| 法定耐用年数 | T_life | 5 | 年 | **実績値** | 国税庁「電子計算機(サーバー用)」 | [Kurojica](https://kurojica.com/server/blog/5948/) |
+| 電力単価 | r_e | 20 | 円/kWh | **公開情報** | 産業用17.5円+再エネ賦課金の中間値 | [Statista](https://www.statista.com/statistics/1220094/japan-electricity-cost-industry/) |
+| PUE | PUE | 1.30 | - | **公開情報** | 日本最新DC PUE 1.2-1.4の中間値 | [JDCC](https://www.jdcc.or.jp/english/pue.html) |
+| 割引率 | WACC | 8 | % | **推定値** | 全社WACC 4-6%+事業リスクプレミアム | [Yahoo Finance 9449.T](https://sg.finance.yahoo.com/quote/9449.T/) |
+| 税率 | τ | 30 | % | **実績値** | 大企業実効税率30.62%の近似 | [PwC](https://taxsummaries.pwc.com/japan/corporate/taxes-on-corporate-income) |
+| インフレ率 | π | 2 | %/年 | **公開情報** | 日銀の物価安定目標 | 日本銀行 |
+| B300プレミアム | - | 1.5 | 倍 | **推定値** | 市場価格1.5-3xの保守的下限 | [Hyperstack](https://www.hyperstack.cloud/nvidia-hgx-b300) |
+
+## 付録B: パラメータ検証サマリー
+
+全18パラメータの検証結果（2026年3月10日時点）:
+
+| # | パラメータ | 値 | 検証結果 | 備考 |
+|---|-----------|---|---------|------|
+| 1 | H200月額単価 | 47.5万円 | **完全一致** | GMO公表価格から直接算出 |
+| 2 | H200消費電力 | 0.70 kW | **完全一致** | NVIDIA公式TDP |
+| 3 | B300消費電力 | 1.20 kW | **正確** | HGX版のTDP（GB300は1.4kW） |
+| 4 | B300プレミアム | 1.5倍 | **保守的** | 市場では1.5-3倍。成熟時の下限値 |
+| 5 | PUE | 1.30 | **正確** | 日本の最新DC標準範囲内 |
+| 6 | 減価償却 | 5年 | **完全一致** | 国税庁法定耐用年数 |
+| 7 | 電力単価 | 20円/kWh | **妥当** | 産業用(17.5円)と業務用(30円)の中間 |
+| 8 | GPU業界平均稼働率 | 15-30% | **修正済み** | 旧値40%から修正。Aethir等のレポートに基づく |
+| 9 | コンサル稼働率 | 65-75% | **正確** | 業界ベンチマーク68-75%と一致 |
+| 10 | GMO助成金 | 19.3億円 | **完全一致** | 経産省認定額 |
+| 11 | GMO CAPEX | 100億円 | **完全一致** | GMO公表投資額 |
+| 12 | GPU基数 | 768基 | **完全一致** | 96ノード×8GPU |
+| 13 | 需要成長率 | 25%/年 | **やや保守的** | 調査会社推定26-36%の下限 |
+| 14 | 供給成長率 | 35%/年 | **妥当な推定** | 直接統計なし。価格下落から間接推定 |
+| 15 | 価格下落率 | 10%/年 | **保守的** | 直近40-50%/年だが初期バブル含む |
+| 16 | 新規参入 | 3社/年 | **正確** | 2024-25年実績と一致 |
+| 17 | 法人税率 | 30% | **正確** | 大企業実効税率30.62%の近似 |
+| 18 | WACC | 8% | **高め** | 全社4-6%だが事業リスクプレミアム込みで正当化可能 |
 
 ---
 
