@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPUクラウド事業 数理経済モデル シミュレーター</title>
+<style>
+:root {
+  --blue: #0057b8;
+  --blue-light: #e8f0fe;
+  --red: #d32f2f;
+  --green: #2e7d32;
+  --gray: #666;
+  --bg: #f7f8fa;
+  --card: #fff;
+  --border: #e0e0e0;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, "Helvetica Neue", "Noto Sans JP", sans-serif;
+  background: var(--bg);
+  color: #222;
+  line-height: 1.5;
+}
+header {
+  background: var(--blue);
+  color: #fff;
+  padding: 20px 24px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+header h1 { font-size: 18px; font-weight: 700; }
+header p { font-size: 12px; opacity: .85; margin-top: 2px; }
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .container { grid-template-columns: 1fr; }
+}
+
+/* ─── Controls Panel ─── */
+.panel {
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 16px;
+  height: fit-content;
+  position: sticky; top: 80px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+.panel h2 {
+  font-size: 14px;
+  color: var(--blue);
+  border-bottom: 2px solid var(--blue);
+  padding-bottom: 6px;
+  margin-bottom: 12px;
+}
+.section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin: 14px 0 6px;
+}
+.control {
+  margin-bottom: 10px;
+}
+.control label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.control label .val {
+  color: var(--blue);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.control input[type=range] {
+  width: 100%;
+  height: 6px;
+  -webkit-appearance: none;
+  background: #ddd;
+  border-radius: 3px;
+  outline: none;
+}
+.control input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--blue);
+  border-radius: 50%;
+  cursor: pointer;
+}
+.control .range-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: #999;
+  margin-top: 1px;
+}
+.preset-btns {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0;
+}
+.preset-btns button {
+  flex: 1;
+  padding: 7px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  border: 2px solid var(--blue);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--blue);
+  cursor: pointer;
+  transition: all .15s;
+}
+.preset-btns button:hover, .preset-btns button.active {
+  background: var(--blue);
+  color: #fff;
+}
+.preset-btns button.pessimistic { border-color: var(--red); color: var(--red); }
+.preset-btns button.pessimistic:hover, .preset-btns button.pessimistic.active { background: var(--red); color: #fff; }
+.preset-btns button.optimistic { border-color: var(--green); color: var(--green); }
+.preset-btns button.optimistic:hover, .preset-btns button.optimistic.active { background: var(--green); color: #fff; }
+
+/* ─── Results ─── */
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.card {
+  background: var(--card);
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  padding: 16px;
+}
+.card h3 {
+  font-size: 13px;
+  color: var(--blue);
+  margin-bottom: 10px;
+}
+
+/* KPI row */
+.kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+@media (max-width: 700px) { .kpi-row { grid-template-columns: repeat(2, 1fr); } }
+.kpi {
+  background: var(--blue-light);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.kpi .kpi-label { font-size: 11px; color: var(--gray); }
+.kpi .kpi-value {
+  font-size: 22px;
+  font-weight: 800;
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.kpi .kpi-value.positive { color: var(--green); }
+.kpi .kpi-value.negative { color: var(--red); }
+
+/* Chart */
+canvas {
+  width: 100% !important;
+  height: 280px !important;
+}
+
+/* Table */
+.sim-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.sim-table th {
+  background: var(--blue);
+  color: #fff;
+  padding: 6px 8px;
+  text-align: right;
+  font-weight: 600;
+  font-size: 11px;
+}
+.sim-table th:first-child { text-align: center; }
+.sim-table td {
+  padding: 5px 8px;
+  text-align: right;
+  border-bottom: 1px solid #eee;
+}
+.sim-table td:first-child { text-align: center; font-weight: 700; }
+.sim-table tr:nth-child(even) { background: #fafbfc; }
+.sim-table .neg { color: var(--red); }
+.sim-table .pos { color: var(--green); }
+
+/* Consulting comparison */
+.compare-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 12px;
+}
+.compare-col {
+  padding: 10px;
+  border-radius: 8px;
+}
+.compare-col.consul { background: #f3e5f5; }
+.compare-col.gpu { background: var(--blue-light); }
+.compare-col h4 { font-size: 12px; margin-bottom: 6px; }
+.compare-col .item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
+.compare-col .item:last-child { border: none; }
+
+.footer { text-align: center; padding: 20px; font-size: 11px; color: #999; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>GPUクラウド事業 数理経済モデル シミュレーター</h1>
+  <p>コンサルティングビジネスとの構造的同型性の観点から — 変数を操作して収益構造を体感</p>
+</header>
+
+<div class="container">
+
+<!-- ─── Left: Controls ─── -->
+<div class="panel">
+  <h2>パラメータ設定</h2>
+
+  <div class="preset-btns">
+    <button class="pessimistic" onclick="applyPreset('pessimistic')">悲観</button>
+    <button class="active" onclick="applyPreset('base')">ベース</button>
+    <button class="optimistic" onclick="applyPreset('optimistic')">楽観</button>
+  </div>
+
+  <div class="section-label">市場環境</div>
+
+  <div class="control">
+    <label>需要成長率 (g_d) <span class="val" id="v_gd">25%</span></label>
+    <input type="range" id="s_gd" min="5" max="50" step="1" value="25" oninput="update()">
+    <div class="range-labels"><span>5%</span><span>50%</span></div>
+  </div>
+
+  <div class="control">
+    <label>供給成長率 (g_s) <span class="val" id="v_gs">35%</span></label>
+    <input type="range" id="s_gs" min="10" max="60" step="1" value="35" oninput="update()">
+    <div class="range-labels"><span>10%</span><span>60%</span></div>
+  </div>
+
+  <div class="control">
+    <label>価格下落率 (δ) <span class="val" id="v_delta">10%</span></label>
+    <input type="range" id="s_delta" min="0" max="30" step="1" value="10" oninput="update()">
+    <div class="range-labels"><span>0%</span><span>30%</span></div>
+  </div>
+
+  <div class="control">
+    <label>新規参入 (社/年) <span class="val" id="v_entry">3</span></label>
+    <input type="range" id="s_entry" min="0" max="10" step="0.5" value="3" oninput="update()">
+    <div class="range-labels"><span>0</span><span>10</span></div>
+  </div>
+
+  <div class="section-label">事業パラメータ</div>
+
+  <div class="control">
+    <label>初期稼働率 (U₀) <span class="val" id="v_u0">80%</span></label>
+    <input type="range" id="s_u0" min="30" max="95" step="1" value="80" oninput="update()">
+    <div class="range-labels"><span>30%</span><span>95%</span></div>
+  </div>
+
+  <div class="control">
+    <label>GPU月額単価 (P₀) <span class="val" id="v_p0">47.5万円</span></label>
+    <input type="range" id="s_p0" min="20" max="80" step="0.5" value="47.5" oninput="update()">
+    <div class="range-labels"><span>20万</span><span>80万</span></div>
+  </div>
+
+  <div class="control">
+    <label>初期投資 (CAPEX) <span class="val" id="v_capex">100億円</span></label>
+    <input type="range" id="s_capex" min="30" max="200" step="5" value="100" oninput="update()">
+    <div class="range-labels"><span>30億</span><span>200億</span></div>
+  </div>
+
+  <div class="control">
+    <label>初期GPU数 <span class="val" id="v_ngpu">768基</span></label>
+    <input type="range" id="s_ngpu" min="100" max="2000" step="50" value="768" oninput="update()">
+    <div class="range-labels"><span>100</span><span>2000</span></div>
+  </div>
+
+  <div class="section-label">コスト</div>
+
+  <div class="control">
+    <label>電力単価 <span class="val" id="v_elec">20円/kWh</span></label>
+    <input type="range" id="s_elec" min="8" max="35" step="1" value="20" oninput="update()">
+    <div class="range-labels"><span>8円</span><span>35円</span></div>
+  </div>
+
+  <div class="control">
+    <label>助成金 <span class="val" id="v_sub">19.3億円</span></label>
+    <input type="range" id="s_sub" min="0" max="100" step="1" value="19" oninput="update()">
+    <div class="range-labels"><span>0億</span><span>100億</span></div>
+  </div>
+
+  <div class="control">
+    <label>割引率 (WACC) <span class="val" id="v_wacc">8%</span></label>
+    <input type="range" id="s_wacc" min="3" max="15" step="0.5" value="8" oninput="update()">
+    <div class="range-labels"><span>3%</span><span>15%</span></div>
+  </div>
+
+  <div class="section-label">シミュレーション期間</div>
+  <div class="control">
+    <label>期間 <span class="val" id="v_years">10年</span></label>
+    <input type="range" id="s_years" min="3" max="15" step="1" value="10" oninput="update()">
+    <div class="range-labels"><span>3年</span><span>15年</span></div>
+  </div>
+</div>
+
+<!-- ─── Right: Results ─── -->
+<div class="results">
+
+  <!-- KPIs -->
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="kpi-label">NPV</div>
+      <div class="kpi-value" id="kpi_npv">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">IRR</div>
+      <div class="kpi-value" id="kpi_irr">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">投資回収期間</div>
+      <div class="kpi-value" id="kpi_payback">—</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">損益分岐稼働率</div>
+      <div class="kpi-value" id="kpi_be">—</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="card">
+    <h3>売上・営業利益・FCF 推移</h3>
+    <canvas id="chartPL"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>稼働率 × GPU単価 推移</h3>
+    <canvas id="chartUtil"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>累計FCF（投資回収カーブ）</h3>
+    <canvas id="chartCumFCF"></canvas>
+  </div>
+
+  <!-- Table -->
+  <div class="card">
+    <h3>年次シミュレーション詳細</h3>
+    <div style="overflow-x:auto">
+      <table class="sim-table" id="simTable">
+        <thead><tr>
+          <th>年</th><th>GPU数</th><th>稼働率</th><th>単価(万)</th>
+          <th>売上(億)</th><th>OPEX(億)</th><th>償却(億)</th><th>営利(億)</th>
+          <th>CAPEX(億)</th><th>FCF(億)</th><th>累計FCF</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Consulting comparison -->
+  <div class="card">
+    <h3>コンサルティングビジネスとの構造比較</h3>
+    <div class="compare-grid">
+      <div class="compare-col consul">
+        <h4>コンサルティング</h4>
+        <div class="item"><span>固定資産</span><span>人材</span></div>
+        <div class="item"><span>固定費</span><span>給与</span></div>
+        <div class="item"><span>損益分岐</span><span>60-70%</span></div>
+        <div class="item"><span>業界平均稼働率</span><span style="color:var(--green);font-weight:700">65-75%</span></div>
+        <div class="item"><span>陳腐化</span><span>3-5年</span></div>
+        <div class="item"><span>流動性</span><span>高い</span></div>
+      </div>
+      <div class="compare-col gpu">
+        <h4>GPUクラウド</h4>
+        <div class="item"><span>固定資産</span><span>GPU</span></div>
+        <div class="item"><span>固定費</span><span>減価償却+電力</span></div>
+        <div class="item"><span>損益分岐</span><span id="cmp_be">—</span></div>
+        <div class="item"><span>業界平均稼働率</span><span style="color:var(--red);font-weight:700">40%</span></div>
+        <div class="item"><span>陳腐化</span><span>2-3年</span></div>
+        <div class="item"><span>流動性</span><span>低い</span></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--gray);margin-top:10px">
+      両ビジネスの利益は「固定費×稼働率」で決まる。GPU Cloudはコンサルより陳腐化が速く(2年 vs 3-5年)、
+      業界平均稼働率(40%)が損益分岐点を下回るため、<strong>構造的に過半数が赤字</strong>になる。
+    </p>
+  </div>
+
+</div>
+</div>
+
+<div class="footer">
+  GPUクラウド事業 数理経済モデル — GMO GPUクラウド分析シリーズ
+</div>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+
+<script>
+// ═══════════════════════════════════════════════
+// Model (mirrors gpu_cloud_economics_model.py)
+// ═══════════════════════════════════════════════
+
+function getParams() {
+  return {
+    gd: +document.getElementById('s_gd').value / 100,
+    gs: +document.getElementById('s_gs').value / 100,
+    delta: +document.getElementById('s_delta').value / 100,
+    nEntry: +document.getElementById('s_entry').value,
+    U0: +document.getElementById('s_u0').value / 100,
+    P0: +document.getElementById('s_p0').value,
+    capex: +document.getElementById('s_capex').value,
+    ngpu: +document.getElementById('s_ngpu').value,
+    elecRate: +document.getElementById('s_elec').value,
+    subsidy: +document.getElementById('s_sub').value,
+    wacc: +document.getElementById('s_wacc').value / 100,
+    years: +document.getElementById('s_years').value,
+  };
+}
+
+function simulate(p) {
+  const N0 = 8, alpha = 0.015, Umin = 0.35;
+  const addGpu = Math.round(p.ngpu * 0.33);   // 追加GPU ≈ 初期の33%
+  const b300Gpu = 200;
+  const b300Premium = 1.5;
+  const life = 5;
+  const taxRate = 0.30;
+  const inflation = 0.02;
+  const pue = 1.30;
+
+  // Fixed OPEX (excl. electricity & depreciation)
+  const fixedOpex = 2.4 + 2.0 + 1.5 + 0.8 + 0.4 + 1.0 + 0.5; // 8.6億
+
+  // Capex schedule
+  const capexAdditional = p.capex * 0.15; // ~15% of initial
+  const capexB300 = 30;
+  const netInitial = p.capex - p.subsidy;
+
+  const rows = [];
+  let cumFCF = 0;
+
+  for (let t = 0; t <= p.years; t++) {
+    // GPU count
+    let h200 = p.ngpu;
+    let b300 = 0;
+    if (t >= 1) h200 += addGpu;
+    if (t >= 2) b300 = b300Gpu;
+    const totalGpu = h200 + b300;
+
+    // Excess demand
+    const ed = Math.pow(1 + p.gd, t) / Math.pow(1 + p.gs, t);
+
+    // Price
+    const basePrice = p.P0 * Math.pow(1 - p.delta, t);
+    const adj = Math.min(Math.max(ed, 0.25), 1.3);
+    const price = basePrice * adj;
+
+    // Utilization
+    const nNew = p.nEntry * t;
+    const compFactor = Math.max(1 - alpha * nNew, 0.5);
+    const demandBoost = Math.min(Math.max(ed, 0.7), 1.15);
+    const util = Math.min(Math.max(p.U0 * compFactor * demandBoost, Umin), 0.95);
+
+    // Revenue
+    const revH200 = h200 * price * util * 12 / 10000;
+    const revB300 = b300 * price * b300Premium * util * 12 / 10000;
+    const revenue = revH200 + revB300;
+
+    // Electricity
+    const kwH200 = h200 * 0.70;
+    const kwB300 = b300 * 1.20;
+    const elecCost = (kwH200 + kwB300) * pue * 8760 * p.elecRate / 1e8;
+
+    // OPEX
+    const opex = elecCost + fixedOpex * Math.pow(1 + inflation, t);
+
+    // Depreciation
+    let dep = 0;
+    if (t < life) dep += netInitial / life;
+    if (t >= 1 && t < 1 + life) dep += capexAdditional / life;
+    if (t >= 2 && t < 2 + life) dep += capexB300 / life;
+
+    // Operating profit
+    const op = revenue - opex - dep;
+
+    // CAPEX
+    let capexT;
+    if (t === 0) capexT = netInitial;
+    else if (t === 1) capexT = capexAdditional;
+    else if (t === 2) capexT = capexB300;
+    else capexT = 2.0;
+
+    // FCF
+    const tax = Math.max(op * taxRate, 0);
+    const fcf = (op - tax) + dep - capexT;
+    cumFCF += fcf;
+
+    rows.push({ t, totalGpu, util, price, revenue, opex, dep, op, capexT, fcf, cumFCF, ed });
+  }
+
+  return rows;
+}
+
+function calcNPV(rows, wacc) {
+  return rows.reduce((s, r) => s + r.fcf / Math.pow(1 + wacc, r.t), 0);
+}
+
+function calcIRR(rows) {
+  const cfs = rows.map(r => r.fcf);
+  function npvAt(r) { return cfs.reduce((s, cf, t) => s + cf / Math.pow(1 + r, t), 0); }
+  // Bisection
+  let lo = -0.5, hi = 5.0;
+  const fLo = npvAt(lo), fHi = npvAt(hi);
+  if (fLo * fHi > 0) return null;
+  for (let i = 0; i < 100; i++) {
+    const mid = (lo + hi) / 2;
+    const fMid = npvAt(mid);
+    if (Math.abs(fMid) < 0.001) return mid;
+    if (fLo * fMid < 0) hi = mid; else lo = mid;
+  }
+  return (lo + hi) / 2;
+}
+
+function calcPayback(rows) {
+  for (let i = 1; i < rows.length; i++) {
+    if (rows[i].cumFCF >= 0 && rows[i - 1].cumFCF < 0) {
+      const frac = rows[i].fcf > 0 ? rows[i].cumFCF / rows[i].fcf : 0;
+      return rows[i].t - frac;
+    }
+  }
+  return null;
+}
+
+function calcBreakeven(p) {
+  // At t=1
+  const netInitial = p.capex - p.subsidy;
+  const capexAdd = p.capex * 0.15;
+  const life = 5;
+  const dep = netInitial / life + capexAdd / life;
+
+  const h200 = p.ngpu + Math.round(p.ngpu * 0.33);
+  const ed1 = (1 + p.gd) / (1 + p.gs);
+  const price1 = p.P0 * (1 - p.delta) * Math.min(Math.max(ed1, 0.25), 1.3);
+  const maxRev = h200 * price1 * 12 / 10000;
+
+  const elec = h200 * 0.70 * 1.30 * 8760 * p.elecRate / 1e8;
+  const fixed = 8.6 * 1.02;
+  const cost = elec + fixed + dep;
+  return maxRev > 0 ? cost / maxRev : 1;
+}
+
+// ═══════════════════════════════════════════════
+// Charts
+// ═══════════════════════════════════════════════
+
+let chartPL, chartUtil, chartCumFCF;
+
+function initCharts() {
+  const commonOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+    scales: {
+      x: { grid: { display: false } },
+      y: { grid: { color: '#eee' } }
+    }
+  };
+
+  chartPL = new Chart(document.getElementById('chartPL'), {
+    type: 'bar',
+    data: {
+      labels: [],
+      datasets: [
+        { label: '売上(億)', backgroundColor: 'rgba(0,87,184,.6)', data: [], order: 2 },
+        { label: '営業利益(億)', backgroundColor: 'rgba(46,125,50,.6)', data: [], order: 2 },
+        { label: 'FCF(億)', type: 'line', borderColor: '#d32f2f', pointRadius: 3, data: [], order: 1, fill: false }
+      ]
+    },
+    options: { ...commonOpts }
+  });
+
+  chartUtil = new Chart(document.getElementById('chartUtil'), {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: '稼働率(%)', borderColor: var_blue(), pointRadius: 3, data: [], yAxisID: 'y', fill: false },
+        { label: 'GPU単価(万)', borderColor: '#ff9800', pointRadius: 3, data: [], yAxisID: 'y1', fill: false }
+      ]
+    },
+    options: {
+      ...commonOpts,
+      scales: {
+        x: { grid: { display: false } },
+        y: { position: 'left', title: { display: true, text: '稼働率(%)' }, grid: { color: '#eee' }, min: 0, max: 100 },
+        y1: { position: 'right', title: { display: true, text: '単価(万円)' }, grid: { display: false }, min: 0 }
+      }
+    }
+  });
+
+  chartCumFCF = new Chart(document.getElementById('chartCumFCF'), {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [
+        { label: '累計FCF(億)', borderColor: var_blue(), backgroundColor: 'rgba(0,87,184,.1)',
+          pointRadius: 4, data: [], fill: true }
+      ]
+    },
+    options: {
+      ...commonOpts,
+      plugins: {
+        ...commonOpts.plugins,
+        annotation: {}
+      },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: '#eee' } }
+      }
+    }
+  });
+}
+
+function var_blue() { return '#0057b8'; }
+
+// ═══════════════════════════════════════════════
+// Update
+// ═══════════════════════════════════════════════
+
+function update() {
+  const p = getParams();
+
+  // Update display values
+  document.getElementById('v_gd').textContent = (p.gd * 100).toFixed(0) + '%';
+  document.getElementById('v_gs').textContent = (p.gs * 100).toFixed(0) + '%';
+  document.getElementById('v_delta').textContent = (p.delta * 100).toFixed(0) + '%';
+  document.getElementById('v_entry').textContent = p.nEntry;
+  document.getElementById('v_u0').textContent = (p.U0 * 100).toFixed(0) + '%';
+  document.getElementById('v_p0').textContent = p.P0 + '万円';
+  document.getElementById('v_capex').textContent = p.capex + '億円';
+  document.getElementById('v_ngpu').textContent = p.ngpu + '基';
+  document.getElementById('v_elec').textContent = p.elecRate + '円/kWh';
+  document.getElementById('v_sub').textContent = p.subsidy + '億円';
+  document.getElementById('v_wacc').textContent = (p.wacc * 100).toFixed(1) + '%';
+  document.getElementById('v_years').textContent = p.years + '年';
+
+  // Simulate
+  const rows = simulate(p);
+  const npv = calcNPV(rows, p.wacc);
+  const irr = calcIRR(rows);
+  const pb = calcPayback(rows);
+  const be = calcBreakeven(p);
+
+  // KPIs
+  const kpiNpv = document.getElementById('kpi_npv');
+  kpiNpv.textContent = npv.toFixed(1) + '億';
+  kpiNpv.className = 'kpi-value ' + (npv >= 0 ? 'positive' : 'negative');
+
+  const kpiIrr = document.getElementById('kpi_irr');
+  kpiIrr.textContent = irr !== null ? (irr * 100).toFixed(1) + '%' : 'N/A';
+  kpiIrr.className = 'kpi-value ' + (irr !== null && irr > 0 ? 'positive' : 'negative');
+
+  const kpiPb = document.getElementById('kpi_payback');
+  kpiPb.textContent = pb !== null ? pb.toFixed(1) + '年' : p.years + '年超';
+  kpiPb.className = 'kpi-value ' + (pb !== null && pb <= 5 ? 'positive' : 'negative');
+
+  const kpiBe = document.getElementById('kpi_be');
+  kpiBe.textContent = (be * 100).toFixed(0) + '%';
+  kpiBe.className = 'kpi-value ' + (be <= 0.6 ? 'positive' : 'negative');
+
+  document.getElementById('cmp_be').textContent = (be * 100).toFixed(0) + '%';
+
+  // Labels
+  const labels = rows.map(r => 'Y' + r.t);
+
+  // Chart PL
+  chartPL.data.labels = labels;
+  chartPL.data.datasets[0].data = rows.map(r => +r.revenue.toFixed(1));
+  chartPL.data.datasets[1].data = rows.map(r => +r.op.toFixed(1));
+  chartPL.data.datasets[2].data = rows.map(r => +r.fcf.toFixed(1));
+  chartPL.update();
+
+  // Chart Util
+  chartUtil.data.labels = labels;
+  chartUtil.data.datasets[0].data = rows.map(r => +(r.util * 100).toFixed(1));
+  chartUtil.data.datasets[1].data = rows.map(r => +r.price.toFixed(1));
+  chartUtil.update();
+
+  // Chart CumFCF
+  chartCumFCF.data.labels = labels;
+  chartCumFCF.data.datasets[0].data = rows.map(r => +r.cumFCF.toFixed(1));
+  // Color based on positive/negative
+  chartCumFCF.data.datasets[0].borderColor = rows[rows.length - 1].cumFCF >= 0 ? '#2e7d32' : '#d32f2f';
+  chartCumFCF.data.datasets[0].backgroundColor = rows[rows.length - 1].cumFCF >= 0 ? 'rgba(46,125,50,.1)' : 'rgba(211,47,47,.1)';
+  chartCumFCF.update();
+
+  // Table
+  const tbody = document.querySelector('#simTable tbody');
+  tbody.innerHTML = rows.map(r => {
+    const cls = v => v >= 0 ? 'pos' : 'neg';
+    return `<tr>
+      <td>Y${r.t}</td>
+      <td>${r.totalGpu.toLocaleString()}</td>
+      <td>${(r.util*100).toFixed(1)}%</td>
+      <td>${r.price.toFixed(1)}</td>
+      <td>${r.revenue.toFixed(1)}</td>
+      <td>${r.opex.toFixed(1)}</td>
+      <td>${r.dep.toFixed(1)}</td>
+      <td class="${cls(r.op)}">${r.op.toFixed(1)}</td>
+      <td>${r.capexT.toFixed(1)}</td>
+      <td class="${cls(r.fcf)}">${r.fcf.toFixed(1)}</td>
+      <td class="${cls(r.cumFCF)}">${r.cumFCF.toFixed(1)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+// Presets
+// ═══════════════════════════════════════════════
+
+const presets = {
+  base:        { gd:25, gs:35, delta:10, entry:3,   u0:80, p0:47.5, capex:100, ngpu:768, elec:20, sub:19, wacc:8 },
+  pessimistic: { gd:20, gs:50, delta:18, entry:5,   u0:70, p0:47.5, capex:100, ngpu:768, elec:25, sub:19, wacc:10 },
+  optimistic:  { gd:40, gs:30, delta:5,  entry:2,   u0:85, p0:47.5, capex:100, ngpu:768, elec:20, sub:19, wacc:8 },
+};
+
+function applyPreset(name) {
+  const pr = presets[name];
+  document.getElementById('s_gd').value = pr.gd;
+  document.getElementById('s_gs').value = pr.gs;
+  document.getElementById('s_delta').value = pr.delta;
+  document.getElementById('s_entry').value = pr.entry;
+  document.getElementById('s_u0').value = pr.u0;
+  document.getElementById('s_p0').value = pr.p0;
+  document.getElementById('s_capex').value = pr.capex;
+  document.getElementById('s_ngpu').value = pr.ngpu;
+  document.getElementById('s_elec').value = pr.elec;
+  document.getElementById('s_sub').value = pr.sub;
+  document.getElementById('s_wacc').value = pr.wacc;
+
+  document.querySelectorAll('.preset-btns button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  update();
+}
+
+// ═══════════════════════════════════════════════
+// Init
+// ═══════════════════════════════════════════════
+
+initCharts();
+update();
+</script>
+</body>
+</html>
