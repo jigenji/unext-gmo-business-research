@@ -205,22 +205,27 @@ canvas {
 .sim-table .neg { color: var(--red); }
 .sim-table .pos { color: var(--green); }
 
-/* Consulting comparison */
-.compare-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+/* Cost structure */
+.cost-structure {
   font-size: 12px;
 }
-.compare-col {
-  padding: 10px;
-  border-radius: 8px;
+.cost-bar {
+  display: flex;
+  height: 28px;
+  border-radius: 6px;
+  overflow: hidden;
+  margin: 8px 0;
 }
-.compare-col.consul { background: #f3e5f5; }
-.compare-col.gpu { background: var(--blue-light); }
-.compare-col h4 { font-size: 12px; margin-bottom: 6px; }
-.compare-col .item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
-.compare-col .item:last-child { border: none; }
+.cost-bar .fixed { background: #1565c0; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+.cost-bar .variable { background: #ff9800; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+.cost-legend { display: flex; gap: 16px; margin: 6px 0; }
+.cost-legend .item { display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.cost-legend .dot { width: 10px; height: 10px; border-radius: 2px; }
+.cost-legend .dot.fixed { background: #1565c0; }
+.cost-legend .dot.variable { background: #ff9800; }
+.cost-detail { margin-top: 8px; }
+.cost-detail .row { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid rgba(0,0,0,.06); }
+.cost-detail .row:last-child { border: none; }
 
 .footer { text-align: center; padding: 20px; font-size: 11px; color: #999; }
 </style>
@@ -229,7 +234,7 @@ canvas {
 
 <header>
   <h1>GPUクラウド事業 数理経済モデル シミュレーター</h1>
-  <p>コンサルティングビジネスとの構造的同型性の観点から — 変数を操作して収益構造を体感</p>
+  <p>データセンタービジネスの第一原理から導出 — 変数を操作して収益構造を体感</p>
 </header>
 
 <div class="container">
@@ -378,32 +383,30 @@ canvas {
     </div>
   </div>
 
-  <!-- Consulting comparison -->
+  <!-- DC Cost Structure -->
   <div class="card">
-    <h3>コンサルティングビジネスとの構造比較</h3>
-    <div class="compare-grid">
-      <div class="compare-col consul">
-        <h4>コンサルティング</h4>
-        <div class="item"><span>固定資産</span><span>人材</span></div>
-        <div class="item"><span>固定費</span><span>給与</span></div>
-        <div class="item"><span>損益分岐</span><span>60-70%</span></div>
-        <div class="item"><span>業界平均稼働率</span><span style="color:var(--green);font-weight:700">65-75%</span></div>
-        <div class="item"><span>陳腐化</span><span>3-5年</span></div>
-        <div class="item"><span>流動性</span><span>高い</span></div>
+    <h3>DC事業の費用構造（固定費 vs 変動費）</h3>
+    <div class="cost-structure">
+      <div class="cost-bar">
+        <div class="fixed" id="bar_fixed" style="width:95%">固定費 <span id="bar_fixed_pct">95</span>%</div>
+        <div class="variable" id="bar_var" style="width:5%"><span id="bar_var_pct">5</span>%</div>
       </div>
-      <div class="compare-col gpu">
-        <h4>GPUクラウド</h4>
-        <div class="item"><span>固定資産</span><span>GPU</span></div>
-        <div class="item"><span>固定費</span><span>減価償却+電力</span></div>
-        <div class="item"><span>損益分岐</span><span id="cmp_be">—</span></div>
-        <div class="item"><span>業界平均稼働率</span><span style="color:var(--red);font-weight:700">15-30%</span></div>
-        <div class="item"><span>陳腐化</span><span>2-3年</span></div>
-        <div class="item"><span>流動性</span><span>低い</span></div>
+      <div class="cost-legend">
+        <div class="item"><div class="dot fixed"></div>固定費（稼働率に関わらず発生）</div>
+        <div class="item"><div class="dot variable"></div>変動費（稼働率に連動）</div>
+      </div>
+      <div class="cost-detail">
+        <div class="row"><span>減価償却</span><span id="cost_dep">—</span></div>
+        <div class="row"><span>固定運営費（施設・人件費等）</span><span id="cost_fixed_ops">—</span></div>
+        <div class="row"><span>電力（ベース/アイドル）</span><span id="cost_elec_fixed">—</span></div>
+        <div class="row" style="color:var(--red)"><span>電力（稼働/変動分）</span><span id="cost_elec_var">—</span></div>
+        <div class="row" style="font-weight:700;border-top:2px solid #333"><span>損益分岐稼働率</span><span id="cmp_be">—</span></div>
+        <div class="row"><span>業界平均稼働率</span><span style="color:var(--red);font-weight:700">15-30%</span></div>
       </div>
     </div>
     <p style="font-size:11px;color:var(--gray);margin-top:10px">
-      両ビジネスの利益は「固定費×稼働率」で決まる。GPU Cloudはコンサルより陳腐化が速く(2年 vs 3-5年)、
-      業界平均稼働率(15-30%)が損益分岐点を大幅に下回るため、<strong>構造的に大多数が赤字</strong>になる。
+      DC事業の変動費は電力の稼働分のみで全費用の数%。<strong>稼働率がゼロでも費用の95%が発生</strong>する。
+      業界平均稼働率(15-30%)が損益分岐点を大幅に下回るため、<strong>大多数の事業者が構造的に赤字</strong>。
       <br>出典: <a href="https://ecosystem.aethir.com/blog-posts/monetize-idle-gpus-in-2025-7-proven-strategies-for-cloud-hosts">Aethir</a>,
       <a href="https://www.thundercompute.com/blog/ai-gpu-rental-market-trends">Thunder Compute</a>
     </p>
@@ -413,7 +416,7 @@ canvas {
 </div>
 
 <div class="footer">
-  GPUクラウド事業 数理経済モデル — GMO GPUクラウド分析シリーズ
+  GPUクラウド事業 数理経済モデル — データセンタービジネスの第一原理から導出 — GMO GPUクラウド分析シリーズ
 </div>
 
 <!-- Chart.js CDN -->
@@ -489,10 +492,14 @@ function simulate(p) {
     const revB300 = b300 * price * b300Premium * util * 12 / 10000;
     const revenue = revH200 + revB300;
 
-    // Electricity
+    // Electricity (fixed + variable split)
+    const idleRatio = 0.40;
     const kwH200 = h200 * 0.70;
     const kwB300 = b300 * 1.20;
-    const elecCost = (kwH200 + kwB300) * pue * 8760 * p.elecRate / 1e8;
+    const totalKw = kwH200 + kwB300;
+    const elecFixed = totalKw * idleRatio * pue * 8760 * p.elecRate / 1e8;
+    const elecVar = totalKw * (1 - idleRatio) * util * pue * 8760 * p.elecRate / 1e8;
+    const elecCost = elecFixed + elecVar;
 
     // OPEX
     const opex = elecCost + fixedOpex * Math.pow(1 + inflation, t);
@@ -518,7 +525,7 @@ function simulate(p) {
     const fcf = (op - tax) + dep - capexT;
     cumFCF += fcf;
 
-    rows.push({ t, totalGpu, util, price, revenue, opex, dep, op, capexT, fcf, cumFCF, ed });
+    rows.push({ t, totalGpu, util, price, revenue, opex, dep, op, capexT, fcf, cumFCF, ed, elecFixed, elecVar, fixedOpexVal: fixedOpex * Math.pow(1 + inflation, t) });
   }
 
   return rows;
@@ -560,16 +567,20 @@ function calcBreakeven(p) {
   const capexAdd = p.capex * 0.15;
   const life = 5;
   const dep = netInitial / life + capexAdd / life;
+  const idleRatio = 0.40;
 
   const h200 = p.ngpu + Math.round(p.ngpu * 0.33);
   const ed1 = (1 + p.gd) / (1 + p.gs);
   const price1 = p.P0 * (1 - p.delta) * Math.min(Math.max(ed1, 0.25), 1.3);
   const maxRev = h200 * price1 * 12 / 10000;
 
-  const elec = h200 * 0.70 * 1.30 * 8760 * p.elecRate / 1e8;
-  const fixed = 8.6 * 1.02;
-  const cost = elec + fixed + dep;
-  return maxRev > 0 ? cost / maxRev : 1;
+  const totalKw = h200 * 0.70;
+  const elecFixed = totalKw * idleRatio * 1.30 * 8760 * p.elecRate / 1e8;
+  const elecVarFull = totalKw * (1 - idleRatio) * 1.30 * 8760 * p.elecRate / 1e8;
+  const fixedOps = 8.6 * 1.02;
+  const totalFixed = elecFixed + fixedOps + dep;
+  const netRevFull = maxRev - elecVarFull;
+  return netRevFull > 0 ? totalFixed / netRevFull : 1;
 }
 
 // ═══════════════════════════════════════════════
@@ -693,6 +704,21 @@ function update() {
   kpiBe.className = 'kpi-value ' + (be <= 0.6 ? 'positive' : 'negative');
 
   document.getElementById('cmp_be').textContent = (be * 100).toFixed(0) + '%';
+
+  // Cost structure (at t=0)
+  const r0 = rows[0];
+  const totalCost = r0.dep + r0.fixedOpexVal + r0.elecFixed + r0.elecVar;
+  const fixedTotal = r0.dep + r0.fixedOpexVal + r0.elecFixed;
+  const fixedPct = totalCost > 0 ? Math.round(fixedTotal / totalCost * 100) : 95;
+  const varPct = 100 - fixedPct;
+  document.getElementById('bar_fixed').style.width = fixedPct + '%';
+  document.getElementById('bar_var').style.width = varPct + '%';
+  document.getElementById('bar_fixed_pct').textContent = fixedPct;
+  document.getElementById('bar_var_pct').textContent = varPct;
+  document.getElementById('cost_dep').textContent = r0.dep.toFixed(1) + '億円';
+  document.getElementById('cost_fixed_ops').textContent = r0.fixedOpexVal.toFixed(1) + '億円';
+  document.getElementById('cost_elec_fixed').textContent = r0.elecFixed.toFixed(2) + '億円';
+  document.getElementById('cost_elec_var').textContent = r0.elecVar.toFixed(2) + '億円';
 
   // Labels
   const labels = rows.map(r => 'Y' + r.t);

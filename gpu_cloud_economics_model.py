@@ -1,14 +1,24 @@
 #!/usr/bin/env python3
 """
-GPUクラウド事業 数理モデル
-==========================
-GMO GPUクラウド事業の収益構造を数理モデルに落とし込み、
+GPUクラウド事業 数理モデル — データセンタービジネスの第一原理から導出
+======================================================================
+
+データセンター（GPU Cloud）ビジネスの経済構造を第一原理から方程式に落とし込み、
 主要変数の感度分析・IRR・NPV・投資回収期間を算出する。
 
-核心的洞察: このビジネスはコンサルティングビジネスと同じ構造を持つ。
-- コンサル: 人材(稼働率) × 単価(時間) × 利用時間 - 人件費(固定)
-- GPU Cloud: GPU(稼働率) × 単価(時間) × 利用時間 - 減価償却(固定)
-両者とも「固定資産(人/GPU)の稼働率ビジネス」であり、稼働率が損益を決定的に左右する。
+モデルの出発点:
+  データセンター事業は「大規模固定資産の時間貸し」ビジネスである。
+  この構造から以下の方程式体系が自然に導出される:
+
+  1. 収益 = 容量 × 単価 × 稼働率
+  2. 費用 = 固定費（減価償却 + 施設 + 人件費 + ベース電力） + 変動費（稼働電力）
+  3. 利益 = 収益 − 費用
+  4. FCF  = NOPAT + 減価償却 − CAPEX
+
+  GPUクラウドの特殊性:
+  - 資産の経済的耐用年数が短い（GPU世代交代: ~2年）
+  - 電力コストが固定+変動の混合構造（アイドル電力 + 稼働電力）
+  - 技術陳腐化による単価下落が継続的に発生
 
 著者: Claude Code Analysis
 日付: 2026-03-10
@@ -32,8 +42,8 @@ GMO GPUクラウド事業の収益構造を数理モデルに落とし込み、
   - 日本産業用電力料金(Statista): https://www.statista.com/statistics/1220094/japan-electricity-cost-industry/
   - H100価格推移(SiliconData): https://www.silicondata.com/blog/h100-rental-price-over-time-2023-to-2025-a-complete-market-analysis
   - GPU稼働率(Aethir): https://ecosystem.aethir.com/blog-posts/monetize-idle-gpus-in-2025-7-proven-strategies-for-cloud-hosts
-  - コンサル稼働率(Mosaic): https://www.mosaicapp.com/post/billable-utilization-rate-statistics-in-professional-services-firms
   - PwC Japan法人税: https://taxsummaries.pwc.com/japan/corporate/taxes-on-corporate-income
+  - CoreWeave S-1: https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&company=coreweave
 """
 
 import numpy as np
@@ -150,7 +160,6 @@ class InvestmentParams:
     #   「器具及び備品」→「電子計算機」→「サーバー用のもの」= 5年
     #   ※一般PCは4年、サーバーは5年
     # 出典: https://kurojica.com/server/blog/5948/
-    #        https://www.mikataconsulting.com/gpuサーバー投資による節税方法について解説【2024年/
     useful_life_years: int = 5         # 法定耐用年数
 
 
@@ -190,6 +199,17 @@ class OperatingParams:
     # 出典: https://docs.nvidia.com/dgx/dgxb300-user-guide/introduction-to-dgxb300.html
     #        https://www.tomshardware.com/tech-industry/artificial-intelligence/nvidias-next-gen-b300-gpus-have-1-400w-tdp
     power_per_gpu_b300_kw: float = 1.20   # B300: 1200W (HGX版)
+
+    # [公開情報] GPUアイドル電力比率
+    # 導出: データセンターGPUのアイドル時消費電力のTDPに対する比率
+    #   - H100/H200のアイドル電力: 約100-150W（TDP 700Wの15-20%）
+    #   - ただしサーバー全体（CPU, メモリ, NIC等）のベース電力を含めると
+    #     システム全体のアイドル電力はGPU TDPの約40%相当
+    #   - DC業界の一般則: サーバーのアイドル電力はピーク時の30-60%
+    #   → GPU単体では低いが、システム全体で40%を採用
+    # 出典: https://www.nvidia.com/en-us/data-center/h200/
+    #        https://www.servethehome.com/nvidia-h100-gpu-power-consumption-review/
+    idle_power_ratio: float = 0.40     # アイドル時電力比率（TDP比）
 
     # [公開情報] PUE (Power Usage Effectiveness)
     # 導出: 日本の最新データセンターの標準的PUE
@@ -270,25 +290,51 @@ class FinancialParams:
 
 
 # =============================================================================
-# 2. 核心モデル
+# 2. 核心モデル — データセンタービジネスの第一原理から導出
 # =============================================================================
 
 class GPUCloudEconomicsModel:
     """
-    GPUクラウド事業の数理モデル
+    GPUクラウド事業の数理モデル — データセンタービジネスの第一原理から
 
-    核心方程式:
-    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    ━━━ データセンター事業の基本構造 ━━━
 
-    Revenue(t) = N_gpu(t) × P(t) × U(t) × 12 / 10⁴  [億円]
+    データセンター（GPU Cloud）は「大規模固定資産の時間貸し」事業である。
+    この事業の経済構造は以下の3つの第一原理から導出される:
 
-    P(t)  = P₀ × (1 - δ)^t × DS_adj(t)     ... 価格（需給調整付き）
-    U(t)  = U₀ × comp_factor(t)              ... 稼働率
-    DS_adj(t) = clip(excess_demand(t), floor, cap) ... 需給調整
+    【原理1】 収益は「容量 × 単価 × 稼働率」で決まる
+      Revenue(t) = Σᵢ [Nᵢ(t) × Pᵢ(t) × U(t) × 12] / 10⁴  [億円]
 
-    コンサルとの同型性:
-    Revenue_consul = N_人 × Rate × Billable% × Hours
-    Revenue_gpu    = N_GPU × Price × Util%   × Hours
+    【原理2】 費用は「固定費 + 変動費」に分解される
+      固定費: 減価償却 + 施設賃料 + 人件費 + ベース電力（アイドル消費）
+      変動費: 稼働電力（GPU負荷に比例する電力消費）
+
+      電力コスト方程式（固定+変動の混合構造）:
+      E(t) = Σᵢ Nᵢ × Wᵢ × [η + (1-η) × U(t)] × PUE × 8760 × rₑ / 10⁸
+        η: アイドル電力比率（TDP比）≈ 0.40
+        → U=0でもη分の電力を消費（固定的）
+        → U=1で全TDP消費（固定η + 変動(1-η)）
+
+    【原理3】 資産は技術陳腐化により価値が減衰する
+      P(t) = P₀ × (1-δ)^t × DS_adj(t)
+      経済的耐用年数 ≈ 3-4年（法定5年より短い）
+      NVIDIA GPU世代交代サイクル ≈ 2年
+
+    ━━━ DC事業の構造的特徴 ━━━
+
+    1. CAPEX集約型: 初期投資が大きく、限界費用が相対的に小さい
+       - CoreWeave S-1: 売上原価の75%超が減価償却
+       - GPU Cloud粗利率: 50-60%（稼働率80%時）
+
+    2. 固定費支配型: 費用の80%以上が固定費
+       - 減価償却: 売上の40-60%
+       - 電力（固定分）: 売上の5-10%
+       - 施設・人件費: 売上の10-15%
+       - 電力（変動分）: 売上の3-6%（唯一の実質変動費）
+
+    3. 稼働率レバレッジ: 損益分岐点を超えると利益が急増
+       - 損益分岐稼働率: 50-74%
+       - 業界平均稼働率: 15-30%（大多数が赤字構造）
     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
     """
 
@@ -302,14 +348,16 @@ class GPUCloudEconomicsModel:
         self.operating = operating or OperatingParams()
         self.financial = financial or FinancialParams()
 
-    # ───── 市場関数 ─────
+    # ───── 市場動学 ─────
 
     def excess_demand_factor(self, t: float) -> float:
         """
         需給バランス係数: 需要成長率 vs 供給成長率の累積差
 
-        需要が供給を上回る → >1（価格維持/上昇圧力）
-        供給が需要を上回る → <1（価格下落圧力）
+        DC事業における導出:
+          GPU計算容量の需要と供給はそれぞれ独立に成長する。
+          需要 > 供給 → 売り手市場（価格維持/上昇）
+          供給 > 需要 → 買い手市場（価格下落圧力）
 
         factor(t) = (1+g_d)^t / (1+g_s)^t
         """
@@ -320,13 +368,16 @@ class GPUCloudEconomicsModel:
     def num_competitors(self, t: float) -> float:
         return self.market.N_0 + self.market.n_entrants_per_year * t
 
-    # ───── 価格関数 ─────
+    # ───── 価格動学 ─────
 
     def gpu_monthly_price(self, t: float) -> float:
         """
         P(t) = P₀ × (1 - δ)^t × clip(DS_factor(t), floor, 1.3)
 
-        t=0で P₀ を返す（DS_factor(0)=1.0）
+        DC事業における導出:
+          GPU価格は2つの要因で変動する:
+          1. 技術陳腐化: 新世代GPU登場により旧世代の価格が下落（δ%/年）
+          2. 需給バランス: 供給過多なら下落加速、需要超過なら維持/上昇
         """
         # 技術陳腐化による基本下落
         base = self.market.P_0 * (1 - self.market.delta_price) ** t
@@ -348,14 +399,16 @@ class GPUCloudEconomicsModel:
             b300 = self.investment.n_gpu_b300
         return {'h200': h200, 'b300': b300, 'total': h200 + b300}
 
-    # ───── 稼働率関数 ─────
+    # ───── 稼働率動学 ─────
 
     def utilization(self, t: float) -> float:
         """
         U(t) = U₀ × comp_factor(t) × demand_boost(t)
 
-        comp_factor: 競合増加 → 稼働率低下
-        demand_boost: 需要超過 → 稼働率上昇
+        DC事業における導出:
+          稼働率は2つの要因で変動する:
+          1. 競合増加: 新規参入により顧客が分散 → 稼働率低下
+          2. 需要ブースト: 市場全体の需要が供給を上回れば稼働率改善
         """
         # 競合増加の影響
         n_new = self.num_competitors(t) - self.market.N_0
@@ -372,7 +425,9 @@ class GPUCloudEconomicsModel:
 
     def annual_revenue(self, t: float) -> float:
         """
-        Revenue(t) = [H200売上 + B300売上] / 10⁴  (億円)
+        【原理1】 Revenue(t) = [H200売上 + B300売上] / 10⁴  (億円)
+
+        DC事業の収益 = 容量(GPU数) × 単価(月額) × 稼働率 × 12ヶ月
         """
         gpus = self.gpu_count(t)
         price = self.gpu_monthly_price(t)
@@ -383,15 +438,46 @@ class GPUCloudEconomicsModel:
 
         return (rev_h200 + rev_b300) / 10000
 
-    # ───── コスト関数 ─────
+    # ───── コスト関数（固定費+変動費の分離構造） ─────
 
-    def annual_electricity_cost(self, t: float) -> float:
-        """電力コスト（億円/年）"""
+    def annual_electricity_cost(self, t: float) -> dict:
+        """
+        【原理2】 電力コスト = 固定電力 + 変動電力
+
+        E(t) = Σᵢ Nᵢ × Wᵢ × [η + (1-η) × U(t)] × PUE × 8760 × rₑ / 10⁸
+
+        DC事業における導出:
+          GPUはアイドル状態でもTDPのη≈40%を消費する（サーバー全体含む）。
+          残りの(1-η)≈60%は実際の計算負荷に比例して増加する。
+          → 電力費は「固定部分（ベースロード）」と「変動部分（負荷比例）」に分解される。
+
+          固定電力: Σᵢ Nᵢ × Wᵢ × η × PUE × 8760 × rₑ（U=0でも発生）
+          変動電力: Σᵢ Nᵢ × Wᵢ × (1-η) × U(t) × PUE × 8760 × rₑ
+        """
         gpus = self.gpu_count(t)
+        util = self.utilization(t)
+        eta = self.operating.idle_power_ratio
+
         h200_kw = gpus['h200'] * self.operating.power_per_gpu_h200_kw
         b300_kw = gpus['b300'] * self.operating.power_per_gpu_b300_kw
-        total_kw = (h200_kw + b300_kw) * self.operating.pue
-        return total_kw * self.operating.hours_per_year * self.operating.electricity_rate / 1e8
+        total_capacity_kw = h200_kw + b300_kw
+
+        # 固定電力（アイドル分）
+        fixed_power_kw = total_capacity_kw * eta
+        fixed_cost = fixed_power_kw * self.operating.pue * self.operating.hours_per_year * self.operating.electricity_rate / 1e8
+
+        # 変動電力（稼働分）
+        variable_power_kw = total_capacity_kw * (1 - eta) * util
+        variable_cost = variable_power_kw * self.operating.pue * self.operating.hours_per_year * self.operating.electricity_rate / 1e8
+
+        total_cost = fixed_cost + variable_cost
+
+        return {
+            'total': total_cost,
+            'fixed': fixed_cost,
+            'variable': variable_cost,
+            'effective_power_kw': (fixed_power_kw + variable_power_kw) * self.operating.pue
+        }
 
     def annual_depreciation(self, t: int) -> float:
         """減価償却費（億円/年）- 定額法"""
@@ -409,18 +495,44 @@ class GPUCloudEconomicsModel:
             dep += self.investment.capex_b300 / life
         return dep
 
-    def annual_opex(self, t: float) -> float:
-        """年間運営費（電力+その他固定費）"""
-        elec = self.annual_electricity_cost(t)
+    def annual_fixed_opex(self, t: float) -> float:
+        """固定運営費（電力固定分を除く、インフレ調整済み）"""
         inflation = (1 + self.financial.inflation_rate) ** t
-        fixed = (self.operating.staff_cost_annual +
-                 self.operating.dc_lease_annual +
-                 self.operating.maintenance_annual +
-                 self.operating.network_annual +
-                 self.operating.software_annual +
-                 self.operating.sales_marketing +
-                 self.operating.general_admin) * inflation
-        return elec + fixed
+        return (self.operating.staff_cost_annual +
+                self.operating.dc_lease_annual +
+                self.operating.maintenance_annual +
+                self.operating.network_annual +
+                self.operating.software_annual +
+                self.operating.sales_marketing +
+                self.operating.general_admin) * inflation
+
+    def annual_opex(self, t: float) -> float:
+        """年間運営費 = 固定運営費 + 電力費（固定+変動）"""
+        elec = self.annual_electricity_cost(t)
+        fixed_ops = self.annual_fixed_opex(t)
+        return elec['total'] + fixed_ops
+
+    def cost_structure(self, t: float) -> dict:
+        """費用構造の内訳（固定費 vs 変動費の分解）"""
+        elec = self.annual_electricity_cost(t)
+        fixed_ops = self.annual_fixed_opex(t)
+        dep = self.annual_depreciation(t)
+
+        total_fixed = dep + fixed_ops + elec['fixed']
+        total_variable = elec['variable']
+        total = total_fixed + total_variable
+
+        return {
+            'depreciation': dep,
+            'fixed_ops': fixed_ops,
+            'electricity_fixed': elec['fixed'],
+            'electricity_variable': elec['variable'],
+            'total_fixed': total_fixed,
+            'total_variable': total_variable,
+            'total': total,
+            'fixed_ratio': total_fixed / total if total > 0 else 1.0,
+            'variable_ratio': total_variable / total if total > 0 else 0.0,
+        }
 
     # ───── 利益・CF ─────
 
@@ -469,13 +581,45 @@ class GPUCloudEconomicsModel:
         return None
 
     def breakeven_utilization(self, t: int = 1) -> float:
-        """損益分岐稼働率"""
-        cost = self.annual_opex(t) + self.annual_depreciation(t)
+        """
+        損益分岐稼働率: この稼働率以上で営業利益 ≥ 0
+
+        DC事業における導出:
+          Revenue(U) = Capacity × Price × U × 12
+          Cost(U) = FixedCost + VariableElec(U)
+          Revenue(U*) = Cost(U*) を解くと:
+
+          U* = (FixedCost - Capacity×Price×12×η_elec) /
+               (Capacity×Price×12 - Capacity×Power×(1-η)×PUE×8760×rate)
+
+          ※ 変動費が小さいため、近似的に U* ≈ FixedCost / MaxRevenue
+        """
+        # 固定費（減価償却 + 固定運営費 + 固定電力）
+        dep = self.annual_depreciation(t)
+        fixed_ops = self.annual_fixed_opex(t)
         gpus = self.gpu_count(t)
+        eta = self.operating.idle_power_ratio
+
+        h200_kw = gpus['h200'] * self.operating.power_per_gpu_h200_kw
+        b300_kw = gpus['b300'] * self.operating.power_per_gpu_b300_kw
+        total_kw = h200_kw + b300_kw
+        elec_fixed = total_kw * eta * self.operating.pue * self.operating.hours_per_year * self.operating.electricity_rate / 1e8
+
+        total_fixed = dep + fixed_ops + elec_fixed
+
+        # 最大収益（U=100%時）
         price = self.gpu_monthly_price(t)
         max_rev = (gpus['h200'] * price * 12 +
                    gpus['b300'] * price * self.operating.b300_price_premium * 12) / 10000
-        return cost / max_rev if max_rev > 0 else 1.0
+
+        # 変動電力の限界コスト（稼働率あたり）
+        elec_var_per_unit_u = total_kw * (1 - eta) * self.operating.pue * self.operating.hours_per_year * self.operating.electricity_rate / 1e8
+
+        # U* = FixedCost / (MaxRevenue - VariableElecAtU=1)
+        net_revenue_at_full = max_rev - elec_var_per_unit_u
+        if net_revenue_at_full > 0:
+            return total_fixed / net_revenue_at_full
+        return 1.0
 
     # ───── シミュレーション ─────
 
@@ -483,12 +627,16 @@ class GPUCloudEconomicsModel:
         results = {k: [] for k in [
             'year', 'gpu_total', 'utilization', 'price_monthly',
             'revenue', 'opex', 'depreciation', 'operating_profit',
-            'capex', 'fcf', 'cumulative_fcf', 'electricity_cost',
-            'ds_factor', 'competitors'
+            'capex', 'fcf', 'cumulative_fcf', 'electricity_total',
+            'electricity_fixed', 'electricity_variable',
+            'ds_factor', 'competitors', 'fixed_cost_ratio'
         ]}
         cum_fcf = 0.0
         for t in range(years + 1):
             gpus = self.gpu_count(t)
+            elec = self.annual_electricity_cost(t)
+            cost_struct = self.cost_structure(t)
+
             results['year'].append(t)
             results['gpu_total'].append(gpus['total'])
             results['utilization'].append(round(self.utilization(t), 3))
@@ -502,9 +650,12 @@ class GPUCloudEconomicsModel:
             cum_fcf += fcf
             results['fcf'].append(round(fcf, 2))
             results['cumulative_fcf'].append(round(cum_fcf, 2))
-            results['electricity_cost'].append(round(self.annual_electricity_cost(t), 2))
+            results['electricity_total'].append(round(elec['total'], 2))
+            results['electricity_fixed'].append(round(elec['fixed'], 2))
+            results['electricity_variable'].append(round(elec['variable'], 2))
             results['ds_factor'].append(round(self.excess_demand_factor(t), 3))
             results['competitors'].append(round(self.num_competitors(t), 1))
+            results['fixed_cost_ratio'].append(round(cost_struct['fixed_ratio'], 3))
         return results
 
     def sensitivity_analysis(self) -> dict:
@@ -598,9 +749,15 @@ def validate_model():
     be = model.breakeven_utilization(0)
     checks.append(f"  損益分岐稼働率 t=0: {be*100:.1f}% (レポート記載50%)")
 
-    # 電力コスト
+    # 電力コスト（固定+変動の内訳付き）
     elec = model.annual_electricity_cost(0)
-    checks.append(f"  電力コスト: {elec:.2f}億円 (レポート1.6-2.0) {'✓' if 1.0<=elec<=2.5 else '✗'}")
+    checks.append(f"  電力コスト: {elec['total']:.2f}億円 (固定{elec['fixed']:.2f} + 変動{elec['variable']:.2f})")
+    checks.append(f"    → レポート1.6-2.0億円 {'✓' if 0.8<=elec['total']<=2.5 else '✗'}")
+
+    # 費用構造
+    cost_struct = model.cost_structure(0)
+    checks.append(f"  固定費合計: {cost_struct['total_fixed']:.2f}億円 (費用の{cost_struct['fixed_ratio']*100:.0f}%)")
+    checks.append(f"  変動費合計: {cost_struct['total_variable']:.2f}億円 (費用の{cost_struct['variable_ratio']*100:.0f}%)")
 
     # コスト構造
     opex = model.annual_opex(0)
@@ -611,7 +768,6 @@ def validate_model():
     checks.append(f"  総コスト: {total_cost:.2f}億円 (レポート約24億円) {'✓' if 20<=total_cost<=30 else '△'}")
 
     # 月次黒字化チェック
-    # t=0で稼働率80%なら営業利益>0 → 月次黒字
     op0 = model.annual_operating_profit(0)
     monthly_op = op0 / 12
     checks.append(f"  月次営業利益 t=0: {monthly_op:.2f}億円 {'(黒字)✓' if monthly_op>0 else '(赤字)'}")
@@ -637,7 +793,7 @@ def validate_model():
 def main():
     print("╔" + "═" * 78 + "╗")
     print("║  GPUクラウド事業 数理経済モデル                                          ║")
-    print("║  — コンサルティングビジネスとの構造的同型性の観点から —                  ║")
+    print("║  — データセンタービジネスの第一原理から導出 —                             ║")
     print("╚" + "═" * 78 + "╝")
 
     # Step 1: 検証
@@ -704,35 +860,37 @@ def main():
         vals = [f"{d['npv']:>7.1f}" for d in data['data']]
         print(f"  {name:<22} | {vals[0]}  | {vals[1]}  | {vals[2]}  | {vals[3]}  | {vals[4]}")
 
-    # Step 5: 構造比較
+    # Step 5: DC事業の構造分析
     print("\n" + "=" * 80)
-    print("コンサルティングビジネスとの構造的同型性")
+    print("データセンター事業の構造的特徴")
     print("=" * 80)
-    print("""
-  ┌─────────────────┬───────────────────────┬───────────────────────┐
-  │ 構造要素         │ コンサルティング       │ GPUクラウド            │
-  ├─────────────────┼───────────────────────┼───────────────────────┤
-  │ 売上方程式       │ N人 × Rate × 稼働率   │ N_GPU × Price × 稼働率│
-  │ 固定資産         │ コンサルタント(人)     │ GPU(ハードウェア)      │
-  │ 固定費の本質     │ 給与(使わなくても発生) │ 減価償却+電力          │
-  │ 損益分岐稼働率   │ 60-70%                │ 50-74%                │
-  │ 業界平均稼働率   │ 65-75%                │ 15-30% (!!)            │
-  │ 陳腐化サイクル   │ 3-5年(スキル)         │ 2-3年(GPU世代)        │
-  │ 限界費用         │ ほぼゼロ              │ 電力費(低い)           │
-  │ 資産の流動性     │ 高い(転職リスク)      │ 低い(中古市場限定)     │
-  ├─────────────────┼───────────────────────┼───────────────────────┤
-  │ 決定的な違い     │ 退職リスク(予測困難)  │ 陳腐化リスク(予測可能) │
-  └─────────────────┴───────────────────────┴───────────────────────┘
 
-  核心的洞察:
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+    cost_struct = model.cost_structure(0)
+    print(f"""
+  ━━━ 費用構造の分解（t=0） ━━━
 
-  両ビジネスの利益は「固定費 × 稼働率」で決まる。
-  GPU Cloudはコンサルより陳腐化が速い(2年 vs 3-5年)が、予測可能(NVIDIAロードマップ)。
+  【固定費】 {cost_struct['total_fixed']:.1f}億円 （全費用の{cost_struct['fixed_ratio']*100:.0f}%）
+    ├─ 減価償却:        {cost_struct['depreciation']:.1f}億円
+    ├─ 固定運営費:      {cost_struct['fixed_ops']:.1f}億円
+    └─ 電力（ベース）:  {cost_struct['electricity_fixed']:.2f}億円  ← GPU idle電力
 
-  → 投資回収は経済的耐用年数(3-4年)内に完了する設計が必須
-  → 稼働率50%以上の確保が生存条件（業界平均15-30%は危機的）
-  → 長期契約によるビラブルレート安定化がコンサルと同様に重要
+  【変動費】 {cost_struct['total_variable']:.2f}億円 （全費用の{cost_struct['variable_ratio']*100:.0f}%）
+    └─ 電力（稼働分）:  {cost_struct['electricity_variable']:.2f}億円  ← GPU負荷比例
+
+  ━━━ DC事業の本質的特徴 ━━━
+
+  1. CAPEX集約型: 減価償却が費用の{cost_struct['depreciation']/cost_struct['total']*100:.0f}%を占める
+  2. 固定費支配型: 費用の{cost_struct['fixed_ratio']*100:.0f}%が固定費（稼働率に関わらず発生）
+  3. 変動費は電力のみ: 稼働率に連動するコストは電力の変動分({cost_struct['electricity_variable']:.2f}億円)のみ
+  4. 高い営業レバレッジ: 損益分岐点を超えると利益が急増するが、下回ると赤字も大きい
+
+  ━━━ 稼働率問題の構造 ━━━
+
+  損益分岐稼働率: {model.breakeven_utilization(0)*100:.0f}%
+  業界平均稼働率: 15-30%（Aethir, Thunder Compute等の報告）
+
+  → 業界平均 < 損益分岐点 = 大多数の事業者が構造的に赤字
+  → 長期契約による稼働率の「床」確保が生存条件
     """)
 
     # Step 6: 方程式体系
@@ -750,12 +908,18 @@ def main():
   ━━━ 稼働率動学 ━━━
   U(t) = U₀ × max(1-α×ΔN, 0.5) × clip(ED(t), 0.7, 1.15)
 
-  ━━━ 収益 ━━━
+  ━━━ 収益（原理1: 容量×単価×稼働率）━━━
   Rev(t) = Σᵢ [Nᵢ(t) × Pᵢ(t) × U(t) × 12] / 10⁴  億円
 
-  ━━━ コスト ━━━
-  OPEX(t) = E(t) + Fixed × (1+π)^t
-  E(t) = ΣᵢNᵢ × Wᵢ × PUE × 8760 × r_e / 10⁸
+  ━━━ 費用（原理2: 固定費+変動費）━━━
+  OPEX(t) = E_fixed(t) + E_var(t) + FixedOps × (1+π)^t
+
+  電力コスト（混合構造）:
+  E(t) = Σᵢ Nᵢ × Wᵢ × [η + (1-η)×U(t)] × PUE × 8760 × rₑ / 10⁸
+    η: アイドル電力比率（TDP比 ≈ 0.40）
+    E_fixed = Σᵢ Nᵢ × Wᵢ × η × PUE × 8760 × rₑ / 10⁸
+    E_var   = Σᵢ Nᵢ × Wᵢ × (1-η) × U(t) × PUE × 8760 × rₑ / 10⁸
+
   Dep(t) = CAPEX_net / T_life
 
   ━━━ キャッシュフロー ━━━
