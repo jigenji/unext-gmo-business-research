@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPU Cloud Business Model — Structure & Reliability</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=SF+Mono&display=swap');
+
+  :root {
+    --bg: #000;
+    --surface: #111;
+    --card: #1a1a1a;
+    --border: #333;
+    --text: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --accent-blue: #2997ff;
+    --accent-green: #30d158;
+    --accent-orange: #ff9f0a;
+    --accent-red: #ff453a;
+    --accent-purple: #bf5af2;
+    --accent-teal: #64d2ff;
+    --gradient-blue: linear-gradient(135deg, #2997ff, #5ac8fa);
+    --gradient-green: linear-gradient(135deg, #30d158, #63e6be);
+    --gradient-orange: linear-gradient(135deg, #ff9f0a, #ffcc02);
+    --gradient-red: linear-gradient(135deg, #ff453a, #ff6961);
+    --gradient-purple: linear-gradient(135deg, #bf5af2, #da8fff);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  .slide {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    padding: 60px 80px;
+    position: relative;
+    overflow: hidden;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .slide.active { display: flex; }
+
+  .slide-number {
+    position: absolute;
+    bottom: 30px;
+    right: 40px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 300;
+  }
+
+  h1 {
+    font-size: 56px;
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: 24px;
+  }
+
+  h1 .gradient-text {
+    background: var(--gradient-blue);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  h2 {
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: -1px;
+    margin-bottom: 40px;
+    line-height: 1.2;
+  }
+
+  h3 {
+    font-size: 22px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: var(--accent-blue);
+  }
+
+  .subtitle {
+    font-size: 24px;
+    color: var(--text-secondary);
+    font-weight: 300;
+    line-height: 1.5;
+    max-width: 700px;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .tag-blue { background: rgba(41,151,255,0.15); color: var(--accent-blue); }
+  .tag-green { background: rgba(48,209,88,0.15); color: var(--accent-green); }
+  .tag-orange { background: rgba(255,159,10,0.15); color: var(--accent-orange); }
+  .tag-red { background: rgba(255,69,58,0.15); color: var(--accent-red); }
+  .tag-purple { background: rgba(191,90,242,0.15); color: var(--accent-purple); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+  }
+
+  .card-glow-blue { box-shadow: 0 0 40px rgba(41,151,255,0.08); }
+  .card-glow-green { box-shadow: 0 0 40px rgba(48,209,88,0.08); }
+  .card-glow-orange { box-shadow: 0 0 40px rgba(255,159,10,0.08); }
+  .card-glow-red { box-shadow: 0 0 40px rgba(255,69,58,0.08); }
+
+  .formula {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 16px;
+    background: rgba(41,151,255,0.06);
+    border: 1px solid rgba(41,151,255,0.15);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 16px 0;
+    line-height: 1.8;
+    color: var(--accent-teal);
+    overflow-x: auto;
+  }
+
+  .formula-large {
+    font-size: 22px;
+    text-align: center;
+    padding: 28px 32px;
+  }
+
+  .desc {
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+
+  .desc strong { color: var(--text); font-weight: 500; }
+
+  .reliability-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 8px 0;
+  }
+
+  .reliability-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-high { background: var(--accent-green); box-shadow: 0 0 8px rgba(48,209,88,0.5); }
+  .dot-medium { background: var(--accent-orange); box-shadow: 0 0 8px rgba(255,159,10,0.5); }
+  .dot-low { background: var(--accent-red); box-shadow: 0 0 8px rgba(255,69,58,0.5); }
+
+  .param-row {
+    display: grid;
+    grid-template-columns: 200px 120px 1fr 90px;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    align-items: center;
+    font-size: 15px;
+  }
+
+  .param-row:last-child { border-bottom: none; }
+
+  .param-name { font-weight: 500; }
+  .param-value { color: var(--accent-teal); font-family: 'SF Mono', monospace; font-size: 14px; }
+  .param-source { color: var(--text-secondary); font-size: 13px; }
+
+  .confidence-badge {
+    padding: 4px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-high { background: rgba(48,209,88,0.15); color: var(--accent-green); }
+  .badge-medium { background: rgba(255,159,10,0.15); color: var(--accent-orange); }
+  .badge-low { background: rgba(255,69,58,0.15); color: var(--accent-red); }
+
+  /* SVG diagram styles */
+  .diagram-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .diagram-container svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Navigation */
+  .nav-hint {
+    position: fixed;
+    bottom: 30px;
+    left: 40px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+  }
+
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: var(--gradient-blue);
+    transition: width 0.3s ease;
+    z-index: 100;
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .slide.active > * {
+    animation: fadeInUp 0.6s ease forwards;
+  }
+
+  .slide.active > *:nth-child(2) { animation-delay: 0.1s; }
+  .slide.active > *:nth-child(3) { animation-delay: 0.2s; }
+  .slide.active > *:nth-child(4) { animation-delay: 0.3s; }
+
+  .big-number {
+    font-size: 72px;
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .metric-label {
+    font-size: 15px;
+    color: var(--text-secondary);
+    font-weight: 400;
+  }
+
+  .divider {
+    width: 60px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--gradient-blue);
+    margin: 24px 0;
+  }
+
+  .list-clean {
+    list-style: none;
+    font-size: 17px;
+    line-height: 2.2;
+  }
+
+  .list-clean li::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent-blue);
+    margin-right: 14px;
+    vertical-align: middle;
+  }
+
+  .tornado-bar {
+    display: flex;
+    align-items: center;
+    margin: 6px 0;
+    gap: 8px;
+  }
+
+  .tornado-label {
+    width: 180px;
+    text-align: right;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .tornado-track {
+    flex: 1;
+    height: 28px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .tornado-fill-left {
+    position: absolute;
+    right: 50%;
+    height: 100%;
+    border-radius: 6px 0 0 6px;
+  }
+
+  .tornado-fill-right {
+    position: absolute;
+    left: 50%;
+    height: 100%;
+    border-radius: 0 6px 6px 0;
+  }
+
+  .tornado-center {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--text-secondary);
+    opacity: 0.3;
+  }
+
+  .tornado-value {
+    width: 70px;
+    font-size: 13px;
+    font-family: 'SF Mono', monospace;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active" id="slide-1">
+  <span class="tag tag-blue">Financial Model Analysis</span>
+  <h1>
+    GPU Cloud事業<br>
+    <span class="gradient-text">数理モデルの構造と信頼性</span>
+  </h1>
+  <div class="divider"></div>
+  <p class="subtitle">
+    U-NEXT / GMO GPU Cloud の投資判断モデルを<br>
+    数式・データソース・信頼区間の観点から解剖する
+  </p>
+  <div style="margin-top:48px; display:flex; gap:40px;">
+    <div>
+      <div class="big-number" style="color:var(--accent-blue);">16</div>
+      <div class="metric-label">校正済みパラメータ</div>
+    </div>
+    <div>
+      <div class="big-number" style="color:var(--accent-green);">10K</div>
+      <div class="metric-label">モンテカルロ試行</div>
+    </div>
+    <div>
+      <div class="big-number" style="color:var(--accent-orange);">11/11</div>
+      <div class="metric-label">バリデーション合格</div>
+    </div>
+  </div>
+  <div class="slide-number">01 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 2: 3-Layer Architecture ==================== -->
+<div class="slide" id="slide-2">
+  <span class="tag tag-blue">Architecture</span>
+  <h2>モデルは3層構造</h2>
+  <div class="diagram-container">
+    <svg width="900" height="420" viewBox="0 0 900 420">
+      <!-- Layer 3: Top -->
+      <rect x="250" y="10" width="400" height="90" rx="16" fill="none" stroke="#bf5af2" stroke-width="2" opacity="0.8"/>
+      <rect x="250" y="10" width="400" height="90" rx="16" fill="#bf5af2" opacity="0.08"/>
+      <text x="450" y="45" text-anchor="middle" fill="#bf5af2" font-size="14" font-weight="600">LAYER 3 — 投資判断指標</text>
+      <text x="450" y="72" text-anchor="middle" fill="#f5f5f7" font-size="18" font-family="SF Mono, monospace">NPV / IRR / 回収期間</text>
+
+      <!-- Arrow -->
+      <line x1="450" y1="100" x2="450" y2="140" stroke="#555" stroke-width="2" marker-end="url(#arrowUp)"/>
+      <text x="468" y="125" fill="#a1a1a6" font-size="12">FCF を割引</text>
+
+      <!-- Layer 2: Middle -->
+      <rect x="150" y="140" width="600" height="110" rx="16" fill="none" stroke="#2997ff" stroke-width="2" opacity="0.8"/>
+      <rect x="150" y="140" width="600" height="110" rx="16" fill="#2997ff" opacity="0.06"/>
+      <text x="450" y="170" text-anchor="middle" fill="#2997ff" font-size="14" font-weight="600">LAYER 2 — P&L / キャッシュフロー計算</text>
+      <!-- Sub boxes -->
+      <rect x="175" y="188" width="130" height="44" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="240" y="215" text-anchor="middle" fill="#64d2ff" font-size="14">売上</text>
+      <rect x="325" y="188" width="130" height="44" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="390" y="215" text-anchor="middle" fill="#64d2ff" font-size="14">電力 / OPEX</text>
+      <rect x="475" y="188" width="130" height="44" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="540" y="215" text-anchor="middle" fill="#64d2ff" font-size="14">減価償却</text>
+      <rect x="625" y="188" width="100" height="44" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="675" y="215" text-anchor="middle" fill="#64d2ff" font-size="14">CAPEX</text>
+
+      <!-- Arrow -->
+      <line x1="450" y1="250" x2="450" y2="290" stroke="#555" stroke-width="2" marker-end="url(#arrowUp)"/>
+      <text x="468" y="275" fill="#a1a1a6" font-size="12">P(t), U(t) を入力</text>
+
+      <!-- Layer 1: Bottom -->
+      <rect x="50" y="290" width="800" height="120" rx="16" fill="none" stroke="#ff9f0a" stroke-width="2" opacity="0.8"/>
+      <rect x="50" y="290" width="800" height="120" rx="16" fill="#ff9f0a" opacity="0.06"/>
+      <text x="450" y="320" text-anchor="middle" fill="#ff9f0a" font-size="14" font-weight="600">LAYER 1 — 市場動学（最も重要 / 最も不確実）</text>
+      <!-- Sub boxes -->
+      <rect x="75" y="340" width="150" height="50" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="150" y="360" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="500">価格 P(t)</text>
+      <text x="150" y="378" text-anchor="middle" fill="#a1a1a6" font-size="11">指数減衰 + 需給</text>
+
+      <rect x="250" y="340" width="150" height="50" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="325" y="360" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="500">稼働率 U(t)</text>
+      <text x="325" y="378" text-anchor="middle" fill="#a1a1a6" font-size="11">ランプアップ + 競合</text>
+
+      <rect x="425" y="340" width="150" height="50" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="500" y="360" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="500">需給 DS(t)</text>
+      <text x="500" y="378" text-anchor="middle" fill="#a1a1a6" font-size="11">g_demand vs g_supply</text>
+
+      <rect x="600" y="340" width="230" height="50" rx="10" fill="#1a1a1a" stroke="#333"/>
+      <text x="715" y="360" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="500">競合参入 N(t)</text>
+      <text x="715" y="378" text-anchor="middle" fill="#a1a1a6" font-size="11">ロジスティック参入→淘汰</text>
+
+      <defs>
+        <marker id="arrowUp" markerWidth="10" markerHeight="7" refX="5" refY="0" orient="auto-start-reverse">
+          <polygon points="0,7 5,0 10,7" fill="#555"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
+  <div class="slide-number">02 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 3: Price Function ==================== -->
+<div class="slide" id="slide-3">
+  <span class="tag tag-orange">Layer 1 — Price Dynamics</span>
+  <h2>価格関数 P(t)</h2>
+  <div class="grid-2">
+    <div>
+      <div class="formula formula-large">
+        P(t) = P₀ × (1 - δ(t))ᵗ × DS(t)
+      </div>
+      <div style="margin-top:24px;">
+        <div class="diagram-container">
+          <svg width="420" height="220" viewBox="0 0 420 220">
+            <!-- Axes -->
+            <line x1="50" y1="180" x2="390" y2="180" stroke="#555" stroke-width="1.5"/>
+            <line x1="50" y1="20" x2="50" y2="180" stroke="#555" stroke-width="1.5"/>
+            <text x="220" y="210" text-anchor="middle" fill="#a1a1a6" font-size="12">経過年数</text>
+            <text x="15" y="100" fill="#a1a1a6" font-size="12" transform="rotate(-90,15,100)">万円/月</text>
+            <!-- Price curve (exponential decay) -->
+            <path d="M50,30 Q100,40 130,60 Q170,85 210,105 Q260,125 310,140 Q350,148 390,152" fill="none" stroke="#2997ff" stroke-width="3"/>
+            <!-- Floor line -->
+            <line x1="50" y1="158" x2="390" y2="158" stroke="#ff453a" stroke-width="1.5" stroke-dasharray="6,4"/>
+            <text x="395" y="162" fill="#ff453a" font-size="11">Floor: P₀×15%</text>
+            <!-- Labels -->
+            <text x="55" y="26" fill="#2997ff" font-size="12" font-weight="500">47.5万</text>
+            <text x="390" y="145" fill="#2997ff" font-size="11">~19万</text>
+            <!-- DS adjustment zone -->
+            <rect x="180" y="95" width="80" height="24" rx="6" fill="#ff9f0a" opacity="0.15"/>
+            <text x="220" y="112" text-anchor="middle" fill="#ff9f0a" font-size="10">DS(t) 調整</text>
+            <!-- Year labels -->
+            <text x="50" y="196" fill="#a1a1a6" font-size="11">Y0</text>
+            <text x="118" y="196" fill="#a1a1a6" font-size="11">Y2</text>
+            <text x="186" y="196" fill="#a1a1a6" font-size="11">Y4</text>
+            <text x="254" y="196" fill="#a1a1a6" font-size="11">Y6</text>
+            <text x="322" y="196" fill="#a1a1a6" font-size="11">Y8</text>
+            <text x="380" y="196" fill="#a1a1a6" font-size="11">Y10</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>各変数の意味</h3>
+      <div class="card" style="padding:24px; margin-bottom:16px;">
+        <div class="reliability-bar">
+          <span class="reliability-dot dot-high"></span>
+          <strong style="font-size:15px;">P₀ = 47.5万円/月</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
+        </div>
+        <p class="desc">GMO公開料金（専有380万/8GPU）から直接取得</p>
+      </div>
+      <div class="card" style="padding:24px; margin-bottom:16px;">
+        <div class="reliability-bar">
+          <span class="reliability-dot dot-medium"></span>
+          <strong style="font-size:15px;">δ(t) = 年間価格下落率</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc">初期30%→定常5%へロジスティック減速。<br>H100実績（$9→$2, R²=0.978）で校正</p>
+      </div>
+      <div class="card" style="padding:24px;">
+        <div class="reliability-bar">
+          <span class="reliability-dot dot-low"></span>
+          <strong style="font-size:15px;">DS(t) = 需給バランス比</strong>
+          <span class="confidence-badge badge-low" style="margin-left:auto;">LOW</span>
+        </div>
+        <p class="desc">(1+g_d)ᵗ / (1+g_s)ᵗ<br>需要25% vs 供給35%。直接データなし</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">03 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 4: Utilization Function ==================== -->
+<div class="slide" id="slide-4">
+  <span class="tag tag-orange">Layer 1 — Utilization</span>
+  <h2>稼働率関数 U(t)</h2>
+  <div class="grid-2">
+    <div>
+      <div class="formula formula-large">
+        U(t) = R(t) × U₀ × C(t) × D(t)
+      </div>
+      <div style="margin-top:20px;">
+        <div class="diagram-container">
+          <svg width="420" height="240" viewBox="0 0 420 240">
+            <!-- Axes -->
+            <line x1="50" y1="200" x2="390" y2="200" stroke="#555" stroke-width="1.5"/>
+            <line x1="50" y1="20" x2="50" y2="200" stroke="#555" stroke-width="1.5"/>
+            <!-- Rampup S-curve (dashed) -->
+            <path d="M50,180 Q80,175 100,150 Q120,100 150,60 Q170,42 200,38 Q250,35 390,35" fill="none" stroke="#30d158" stroke-width="2" stroke-dasharray="6,3" opacity="0.6"/>
+            <text x="110" y="145" fill="#30d158" font-size="11">R(t) ランプアップ</text>
+            <!-- Actual utilization (solid) -->
+            <path d="M50,180 Q80,170 100,140 Q130,95 160,72 Q200,62 230,70 Q280,85 330,100 Q360,110 390,115" fill="none" stroke="#ff9f0a" stroke-width="3"/>
+            <text x="300" y="90" fill="#ff9f0a" font-size="11" font-weight="500">U(t) 実効稼働率</text>
+            <!-- Ceiling line -->
+            <line x1="50" y1="30" x2="390" y2="30" stroke="#a1a1a6" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="395" y="34" fill="#a1a1a6" font-size="10">95% 上限</text>
+            <!-- Floor line -->
+            <line x1="50" y1="155" x2="390" y2="155" stroke="#ff453a" stroke-width="1" stroke-dasharray="4,4"/>
+            <text x="395" y="159" fill="#ff453a" font-size="10">U_min=35%</text>
+            <!-- Labels -->
+            <text x="55" y="185" fill="#ff9f0a" font-size="11">~45%</text>
+            <text x="175" y="60" fill="#ff9f0a" font-size="11">66%</text>
+            <text x="370" y="130" fill="#ff9f0a" font-size="11">~52%</text>
+            <!-- Year labels -->
+            <text x="50" y="216" fill="#a1a1a6" font-size="11">Y0</text>
+            <text x="118" y="216" fill="#a1a1a6" font-size="11">Y2</text>
+            <text x="186" y="216" fill="#a1a1a6" font-size="11">Y4</text>
+            <text x="254" y="216" fill="#a1a1a6" font-size="11">Y6</text>
+            <text x="322" y="216" fill="#a1a1a6" font-size="11">Y8</text>
+            <text x="380" y="216" fill="#a1a1a6" font-size="11">Y10</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h3>4つの構成要素</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <span style="color:var(--accent-green); font-weight:600;">R(t)</span>
+          <span style="font-size:15px; font-weight:500;">ランプアップ</span>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc">S字カーブ。GMO実績: 9ヶ月で月次黒字化</p>
+      </div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <span style="color:var(--accent-orange); font-weight:600;">U₀</span>
+          <span style="font-size:15px; font-weight:500;">初期稼働率 = 75%</span>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc">GMO月次黒字化→50%超は確実。業界平均15-30%との乖離大</p>
+      </div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <span style="color:var(--accent-red); font-weight:600;">C(t)</span>
+          <span style="font-size:15px; font-weight:500;">競合圧力</span>
+          <span class="confidence-badge badge-low" style="margin-left:auto;">LOW</span>
+        </div>
+        <p class="desc">max(1 - α×N_new, 0.5)。α=0.015はモデル固有。実績校正なし</p>
+      </div>
+      <div class="card" style="padding:20px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+          <span style="color:var(--accent-red); font-weight:600;">D(t)</span>
+          <span style="font-size:15px; font-weight:500;">需要ブースト</span>
+          <span class="confidence-badge badge-low" style="margin-left:auto;">LOW</span>
+        </div>
+        <p class="desc">clip(DS(t), 0.7, 1.15)。需給比から派生</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">04 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 5: Revenue & Cost ==================== -->
+<div class="slide" id="slide-5">
+  <span class="tag tag-blue">Layer 2 — P&L</span>
+  <h2>売上とコストの数式</h2>
+  <div class="grid-2">
+    <div>
+      <h3>売上</h3>
+      <div class="formula">
+Rev(t) = Σ [N_gpu × P(t) × β × U(t) × 12]
+
+  H200: 1,024基 × P(t) × 1.0 × U(t) × 12
+  B300:   200基 × P(t) × 1.8 × U(t) × 12
+      </div>
+      <p class="desc" style="margin-top:16px;">
+        GPU基数 × 月額単価 × プレミアム × 稼働率 × 12ヶ月<br>
+        <strong>現実との対応:</strong> 各GPUの時間貸し売上の年間合計
+      </p>
+
+      <h3 style="margin-top:28px;">電力コスト</h3>
+      <div class="formula">
+Elec(t) = kW × PUE × 8760h × Rate(t)
+         × [η + (1-η) × U(t)]
+
+  固定分: アイドル電力 (TDPの40%)
+  変動分: 稼働時追加電力
+      </div>
+    </div>
+    <div>
+      <h3>コスト構造（現実との対応）</h3>
+      <div class="diagram-container">
+        <svg width="380" height="340" viewBox="0 0 380 340">
+          <!-- Stacked bar chart -->
+          <text x="190" y="20" text-anchor="middle" fill="#f5f5f7" font-size="14" font-weight="600">Y1 費用構成（億円）</text>
+          <!-- Bar -->
+          <rect x="100" y="40" width="180" height="70" rx="4" fill="#bf5af2" opacity="0.7"/>
+          <text x="190" y="75" text-anchor="middle" fill="#fff" font-size="13" font-weight="500">減価償却 19.1億</text>
+          <text x="190" y="92" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="11">初期投資100億 ÷ 5年</text>
+
+          <rect x="100" y="114" width="180" height="50" rx="4" fill="#2997ff" opacity="0.7"/>
+          <text x="190" y="140" text-anchor="middle" fill="#fff" font-size="13" font-weight="500">固定OPEX 12.4億</text>
+          <text x="190" y="155" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="11">人件費+SW+DC+保守+NW</text>
+
+          <rect x="100" y="168" width="180" height="22" rx="4" fill="#30d158" opacity="0.7"/>
+          <text x="190" y="184" text-anchor="middle" fill="#fff" font-size="12">電力 1.3億</text>
+
+          <!-- Annotation -->
+          <line x1="285" y1="55" x2="320" y2="55" stroke="#bf5af2" stroke-width="1.5"/>
+          <text x="325" y="50" fill="#bf5af2" font-size="11">固定費</text>
+          <text x="325" y="63" fill="#bf5af2" font-size="11">98%</text>
+
+          <!-- Revenue comparison -->
+          <text x="190" y="218" text-anchor="middle" fill="#f5f5f7" font-size="14" font-weight="600">Y1 売上 vs コスト</text>
+          <rect x="100" y="232" width="130" height="36" rx="4" fill="#2997ff" opacity="0.5"/>
+          <text x="165" y="255" text-anchor="middle" fill="#fff" font-size="13">売上 27.4億</text>
+          <rect x="100" y="272" width="155" height="36" rx="4" fill="#ff453a" opacity="0.5"/>
+          <text x="177" y="295" text-anchor="middle" fill="#fff" font-size="13">総コスト 32.8億</text>
+
+          <text x="190" y="328" text-anchor="middle" fill="#ff453a" font-size="14" font-weight="500">→ Y1 営業利益: ▲5.4億円</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">05 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 6: DCF Layer ==================== -->
+<div class="slide" id="slide-6">
+  <span class="tag tag-purple">Layer 3 — Investment Metrics</span>
+  <h2>投資判断指標の算出</h2>
+  <div style="max-width:800px;">
+    <div class="formula formula-large" style="margin-bottom:24px;">
+FCF(t) = (営業利益 − Tax) + 減価償却 − CAPEX
+    </div>
+    <div class="grid-3" style="margin-bottom:32px;">
+      <div class="card card-glow-blue" style="text-align:center;">
+        <div class="formula" style="font-size:14px; margin:0 0 12px 0; padding:12px;">
+NPV = Σ FCF(t)/(1+r)ᵗ
+        </div>
+        <div class="big-number" style="font-size:48px; color:var(--accent-red);">-98.5</div>
+        <div class="metric-label">NPV（億円）</div>
+      </div>
+      <div class="card card-glow-blue" style="text-align:center;">
+        <div class="formula" style="font-size:14px; margin:0 0 12px 0; padding:12px;">
+IRR: NPV(r)=0 を解く
+        </div>
+        <div class="big-number" style="font-size:48px; color:var(--accent-red);">N/A</div>
+        <div class="metric-label">IRR（WACC=8%）</div>
+      </div>
+      <div class="card card-glow-blue" style="text-align:center;">
+        <div class="formula" style="font-size:14px; margin:0 0 12px 0; padding:12px;">
+累計FCF ≥ 0 の年
+        </div>
+        <div class="big-number" style="font-size:48px; color:var(--accent-red);">>15</div>
+        <div class="metric-label">回収期間（年）</div>
+      </div>
+    </div>
+    <div class="card" style="background:rgba(255,69,58,0.06); border-color:rgba(255,69,58,0.2);">
+      <p class="desc" style="font-size:16px; text-align:center;">
+        <strong style="color:var(--accent-red);">ベースケースの意味:</strong>
+        全パラメータを中央値に設定しても投資回収不能。<br>
+        売上（価格×稼働率）の減少速度がコスト削減を上回り、赤字が拡大する構造。
+      </p>
+    </div>
+  </div>
+  <div class="slide-number">06 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 7: Monte Carlo ==================== -->
+<div class="slide" id="slide-7">
+  <span class="tag tag-green">Monte Carlo Simulation</span>
+  <h2>モンテカルロシミュレーション</h2>
+  <div class="grid-2">
+    <div>
+      <div class="diagram-container">
+        <svg width="420" height="320" viewBox="0 0 420 320">
+          <!-- Process flow -->
+          <rect x="120" y="10" width="180" height="44" rx="12" fill="none" stroke="#2997ff" stroke-width="1.5"/>
+          <text x="210" y="37" text-anchor="middle" fill="#2997ff" font-size="13" font-weight="500">16パラメータをサンプリング</text>
+
+          <line x1="210" y1="54" x2="210" y2="75" stroke="#555" stroke-width="1.5"/>
+          <polygon points="205,72 215,72 210,80" fill="#555"/>
+
+          <rect x="120" y="80" width="180" height="44" rx="12" fill="none" stroke="#ff9f0a" stroke-width="1.5"/>
+          <text x="210" y="107" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="500">モデル実行 → FCF算出</text>
+
+          <line x1="210" y1="124" x2="210" y2="145" stroke="#555" stroke-width="1.5"/>
+          <polygon points="205,142 215,142 210,150" fill="#555"/>
+
+          <rect x="120" y="150" width="180" height="44" rx="12" fill="none" stroke="#30d158" stroke-width="1.5"/>
+          <text x="210" y="177" text-anchor="middle" fill="#30d158" font-size="13" font-weight="500">NPV / IRR / 回収 を記録</text>
+
+          <!-- Loop arrow -->
+          <path d="M305,170 Q360,170 360,97 Q360,30 305,30" fill="none" stroke="#a1a1a6" stroke-width="1.5" stroke-dasharray="4,3"/>
+          <polygon points="308,26 308,34 302,30" fill="#a1a1a6"/>
+          <text x="372" y="100" fill="#a1a1a6" font-size="12">×10,000</text>
+
+          <!-- Distribution output -->
+          <line x1="210" y1="194" x2="210" y2="220" stroke="#555" stroke-width="1.5"/>
+          <polygon points="205,217 215,217 210,225" fill="#555"/>
+
+          <!-- Histogram sketch -->
+          <rect x="50" y="230" width="320" height="80" rx="10" fill="#1a1a1a" stroke="#333"/>
+          <text x="210" y="250" text-anchor="middle" fill="#f5f5f7" font-size="12" font-weight="500">NPV 分布（10,000回）</text>
+          <!-- Bars -->
+          <rect x="85" y="277" width="16" height="8" fill="#ff453a" opacity="0.6"/>
+          <rect x="105" y="272" width="16" height="13" fill="#ff453a" opacity="0.7"/>
+          <rect x="125" y="264" width="16" height="21" fill="#ff453a" opacity="0.7"/>
+          <rect x="145" y="258" width="16" height="27" fill="#ff453a" opacity="0.8"/>
+          <rect x="165" y="262" width="16" height="23" fill="#ff453a" opacity="0.9"/>
+          <rect x="185" y="268" width="16" height="17" fill="#ff9f0a" opacity="0.8"/>
+          <rect x="205" y="272" width="16" height="13" fill="#ff9f0a" opacity="0.7"/>
+          <rect x="225" y="275" width="16" height="10" fill="#ff9f0a" opacity="0.6"/>
+          <rect x="245" y="278" width="16" height="7" fill="#30d158" opacity="0.5"/>
+          <rect x="265" y="280" width="16" height="5" fill="#30d158" opacity="0.4"/>
+          <rect x="285" y="281" width="16" height="4" fill="#30d158" opacity="0.3"/>
+          <rect x="305" y="282" width="16" height="3" fill="#30d158" opacity="0.2"/>
+          <!-- Zero line -->
+          <line x1="243" y1="255" x2="243" y2="290" stroke="#f5f5f7" stroke-width="1" stroke-dasharray="3,2"/>
+          <text x="243" y="300" text-anchor="middle" fill="#a1a1a6" font-size="10">NPV=0</text>
+          <text x="140" y="300" text-anchor="middle" fill="#ff453a" font-size="10">90.7%</text>
+          <text x="290" y="300" text-anchor="middle" fill="#30d158" font-size="10">9.3%</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <h3>確率的判断</h3>
+      <div class="card" style="padding:24px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:17px;">NPV > 0 の確率</span>
+          <span style="font-size:28px; font-weight:700; color:var(--accent-red);">9.3%</span>
+        </div>
+      </div>
+      <div class="card" style="padding:24px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:17px;">IRR > WACC(8%)</span>
+          <span style="font-size:28px; font-weight:700; color:var(--accent-orange);">28.1%</span>
+        </div>
+      </div>
+      <div class="card" style="padding:24px; margin-bottom:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <span style="font-size:17px;">10年以内回収</span>
+          <span style="font-size:28px; font-weight:700; color:var(--accent-orange);">16.8%</span>
+        </div>
+      </div>
+      <div class="card" style="background:rgba(255,159,10,0.06); border-color:rgba(255,159,10,0.2); padding:20px;">
+        <p class="desc" style="font-size:14px;">
+          <strong style="color:var(--accent-orange);">注意:</strong>
+          これらは「正確な確率」ではない。パラメータの独立性仮定、分布の形状仮定、
+          構造的不確実性（数式自体の妥当性）を含まない条件付き推定値。
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">07 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 8: Variable Map ==================== -->
+<div class="slide" id="slide-8">
+  <span class="tag tag-blue">Parameter Map</span>
+  <h2>全16パラメータと信頼性</h2>
+  <div style="overflow-y:auto; max-height:75vh;">
+    <div class="param-row" style="font-weight:600; color:var(--text-secondary); font-size:13px; border-bottom:1px solid var(--border);">
+      <div>パラメータ</div>
+      <div>中央値</div>
+      <div>データソース（現実世界の対応）</div>
+      <div>信頼度</div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">P₀ 月額単価</div>
+      <div class="param-value">47.5万円</div>
+      <div class="param-source">GMO料金ページ: 専有380万/8GPU</div>
+      <div><span class="confidence-badge badge-high">HIGH</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">電力単価</div>
+      <div class="param-value">20円/kWh</div>
+      <div class="param-source">Statista 2025 + 経産省 再エネ賦課金</div>
+      <div><span class="confidence-badge badge-high">HIGH</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">法人税率</div>
+      <div class="param-value">30%</div>
+      <div class="param-source">PwC Japan 法定実効税率 30.62%</div>
+      <div><span class="confidence-badge badge-high">HIGH</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">δ 価格下落率</div>
+      <div class="param-value">15%/年</div>
+      <div class="param-source">H100実績 $9→$2 (R²=0.978)、定常期</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">g_demand 需要成長</div>
+      <div class="param-value">25%</div>
+      <div class="param-source">4社市場調査中央値 (16-36%)</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">U₀ 初期稼働率</div>
+      <div class="param-value">75%</div>
+      <div class="param-source">GMO月次黒字化（間接証拠）</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">PUE</div>
+      <div class="param-value">1.30</div>
+      <div class="param-source">JDCC調査、2026規制上限1.40</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">WACC</div>
+      <div class="param-value">8%</div>
+      <div class="param-source">GMO CAPM β=0.47 + リスクプレミアム</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">ランプアップ期間</div>
+      <div class="param-value">9ヶ月</div>
+      <div class="param-source">GMO実績 2024/11→2025/Q3黒字化</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">アイドル電力比</div>
+      <div class="param-value">40%</div>
+      <div class="param-source">NVIDIA公式TDP + DC業界一般則</div>
+      <div><span class="confidence-badge badge-medium">MED</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">g_supply 供給成長</div>
+      <div class="param-value">35%</div>
+      <div class="param-source">価格下落からの逆推定（直接データなし）</div>
+      <div><span class="confidence-badge badge-low">LOW</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">α 競合感度</div>
+      <div class="param-value">0.015</div>
+      <div class="param-source">モデル固有。さくら下方修正で間接校正</div>
+      <div><span class="confidence-badge badge-low">LOW</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">U_min 最低稼働率</div>
+      <div class="param-value">35%</div>
+      <div class="param-source">業界平均15-30% + ロックイン効果推定</div>
+      <div><span class="confidence-badge badge-low">LOW</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">SW ライセンス</div>
+      <div class="param-value">2.0億/年</div>
+      <div class="param-source">NVIDIA AI Enterprise リスト÷割引推定</div>
+      <div><span class="confidence-badge badge-low">LOW</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">人件費</div>
+      <div class="param-value">3.5億/年</div>
+      <div class="param-source">GPU専門人材市場価格推定</div>
+      <div><span class="confidence-badge badge-low">LOW</span></div>
+    </div>
+    <div class="param-row">
+      <div class="param-name">B300プレミアム</div>
+      <div class="param-value">1.8x</div>
+      <div class="param-source">Hyperstack B300 vs H200 実勢価格比</div>
+      <div><span class="confidence-badge badge-low">LOW</span></div>
+    </div>
+  </div>
+  <div class="slide-number">08 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 9: Tornado ==================== -->
+<div class="slide" id="slide-9">
+  <span class="tag tag-red">Sensitivity Analysis</span>
+  <h2>感度分析 — 何がNPVを動かすか</h2>
+  <div style="max-width:850px;">
+    <!-- Tornado chart in SVG -->
+    <div class="diagram-container">
+      <svg width="850" height="380" viewBox="0 0 850 380">
+        <text x="425" y="25" text-anchor="middle" fill="#a1a1a6" font-size="13">NPV変動幅（億円）— ベースケース: -98.5億円</text>
+
+        <!-- Center line -->
+        <line x1="500" y1="40" x2="500" y2="355" stroke="#555" stroke-width="1.5"/>
+        <text x="500" y="375" text-anchor="middle" fill="#a1a1a6" font-size="11">ベースNPV</text>
+
+        <!-- Row 1: g_supply -->
+        <text x="195" y="65" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">供給成長率</text>
+        <text x="195" y="80" text-anchor="end" fill="#ff453a" font-size="11">LOW</text>
+        <rect x="270" y="52" width="230" height="28" rx="4" fill="#30d158" opacity="0.6"/>
+        <rect x="500" y="52" width="135" height="28" rx="4" fill="#ff453a" opacity="0.6"/>
+        <text x="270" y="71" fill="#fff" font-size="11" dx="6">+4.2億</text>
+        <text x="635" y="71" fill="#fff" font-size="11" dx="-50">-160億</text>
+        <text x="660" y="71" fill="#a1a1a6" font-size="12" font-weight="500">164億</text>
+
+        <!-- Row 2: g_demand -->
+        <text x="195" y="115" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">需要成長率</text>
+        <text x="195" y="130" text-anchor="end" fill="#ff9f0a" font-size="11">MED</text>
+        <rect x="277" y="102" width="223" height="28" rx="4" fill="#ff453a" opacity="0.6"/>
+        <rect x="500" y="102" width="227" height="28" rx="4" fill="#30d158" opacity="0.6"/>
+        <text x="277" y="121" fill="#fff" font-size="11" dx="6">-155億</text>
+        <text x="727" y="121" fill="#fff" font-size="11" dx="-45">+4.8億</text>
+        <text x="745" y="121" fill="#a1a1a6" font-size="12" font-weight="500">160億</text>
+
+        <!-- Row 3: delta_price -->
+        <text x="195" y="165" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">価格下落率</text>
+        <text x="195" y="180" text-anchor="end" fill="#ff9f0a" font-size="11">MED</text>
+        <rect x="365" y="152" width="135" height="28" rx="4" fill="#30d158" opacity="0.6"/>
+        <rect x="500" y="152" width="135" height="28" rx="4" fill="#ff453a" opacity="0.6"/>
+        <text x="365" y="171" fill="#fff" font-size="11" dx="6">-63億</text>
+        <text x="635" y="171" fill="#fff" font-size="11" dx="-45">-160億</text>
+        <text x="655" y="171" fill="#a1a1a6" font-size="12" font-weight="500">97億</text>
+
+        <!-- Row 4: U_0 -->
+        <text x="195" y="215" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">初期稼働率</text>
+        <text x="195" y="230" text-anchor="end" fill="#ff9f0a" font-size="11">MED</text>
+        <rect x="410" y="202" width="90" height="28" rx="4" fill="#ff453a" opacity="0.6"/>
+        <rect x="500" y="202" width="55" height="28" rx="4" fill="#30d158" opacity="0.6"/>
+        <text x="410" y="221" fill="#fff" font-size="11" dx="6">-135億</text>
+        <text x="555" y="221" fill="#fff" font-size="11" dx="-38">-72億</text>
+        <text x="575" y="221" fill="#a1a1a6" font-size="12" font-weight="500">64億</text>
+
+        <!-- Row 5: SW License -->
+        <text x="195" y="265" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">SWライセンス</text>
+        <text x="195" y="280" text-anchor="end" fill="#ff453a" font-size="11">LOW</text>
+        <rect x="460" y="252" width="40" height="28" rx="4" fill="#30d158" opacity="0.6"/>
+        <rect x="500" y="252" width="40" height="28" rx="4" fill="#ff453a" opacity="0.6"/>
+        <text x="460" y="271" fill="#fff" font-size="10" dx="2">-87億</text>
+        <text x="540" y="271" fill="#fff" font-size="10" dx="-30">-123億</text>
+        <text x="555" y="271" fill="#a1a1a6" font-size="12" font-weight="500">36億</text>
+
+        <!-- Row 6: alpha -->
+        <text x="195" y="315" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">競合感度 α</text>
+        <text x="195" y="330" text-anchor="end" fill="#ff453a" font-size="11">LOW</text>
+        <rect x="463" y="302" width="37" height="28" rx="4" fill="#30d158" opacity="0.6"/>
+        <rect x="500" y="302" width="37" height="28" rx="4" fill="#ff453a" opacity="0.6"/>
+        <text x="463" y="321" fill="#fff" font-size="10" dx="2">-88億</text>
+        <text x="537" y="321" fill="#fff" font-size="10" dx="-30">-120億</text>
+        <text x="555" y="321" fill="#a1a1a6" font-size="12" font-weight="500">32億</text>
+
+        <!-- Legend -->
+        <rect x="200" y="355" width="14" height="14" rx="3" fill="#30d158" opacity="0.6"/>
+        <text x="220" y="367" fill="#a1a1a6" font-size="11">NPV改善方向</text>
+        <rect x="320" y="355" width="14" height="14" rx="3" fill="#ff453a" opacity="0.6"/>
+        <text x="340" y="367" fill="#a1a1a6" font-size="11">NPV悪化方向</text>
+      </svg>
+    </div>
+  </div>
+  <div style="margin-top:8px;">
+    <p class="desc" style="text-align:center; font-size:15px;">
+      <strong style="color:var(--accent-red);">最大のリスク:</strong>
+      NPVを最も左右する上位2パラメータ（供給・需要成長率）は、いずれも信頼度が低い
+    </p>
+  </div>
+  <div class="slide-number">09 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 10: Stress Test ==================== -->
+<div class="slide" id="slide-10">
+  <span class="tag tag-red">Stress Test</span>
+  <h2>ストレステスト — 極端シナリオ</h2>
+  <div class="diagram-container" style="margin-bottom:24px;">
+    <svg width="800" height="200" viewBox="0 0 800 200">
+      <!-- NPV range bar -->
+      <text x="400" y="20" text-anchor="middle" fill="#a1a1a6" font-size="13">NPVレンジ（億円）</text>
+      <!-- Scale -->
+      <line x1="50" y1="90" x2="750" y2="90" stroke="#333" stroke-width="1"/>
+      <text x="50" y="110" fill="#a1a1a6" font-size="11">-250</text>
+      <text x="400" y="110" fill="#a1a1a6" font-size="11">0</text>
+      <text x="750" y="110" fill="#a1a1a6" font-size="11">+150</text>
+      <!-- Zero line -->
+      <line x1="400" y1="40" x2="400" y2="100" stroke="#f5f5f7" stroke-width="1.5"/>
+      <!-- Range bar -->
+      <rect x="92" y="55" width="538" height="30" rx="15" fill="url(#rangeGradient)" opacity="0.8"/>
+      <!-- Markers -->
+      <circle cx="92" cy="70" r="6" fill="#ff453a" stroke="#ff453a" stroke-width="2"/>
+      <text x="92" y="48" text-anchor="middle" fill="#ff453a" font-size="12" font-weight="600">-236億</text>
+      <text x="92" y="135" text-anchor="middle" fill="#ff453a" font-size="11">複合最悪</text>
+
+      <circle cx="310" cy="70" r="5" fill="#ff9f0a"/>
+      <text x="310" y="135" text-anchor="middle" fill="#ff9f0a" font-size="11">ベース -99億</text>
+
+      <circle cx="630" cy="70" r="6" fill="#30d158" stroke="#30d158" stroke-width="2"/>
+      <text x="630" y="48" text-anchor="middle" fill="#30d158" font-size="12" font-weight="600">+148億</text>
+      <text x="630" y="135" text-anchor="middle" fill="#30d158" font-size="11">楽観</text>
+
+      <!-- Asymmetry annotation -->
+      <path d="M92,155 L310,155" stroke="#ff453a" stroke-width="1.5"/>
+      <text x="201" y="170" text-anchor="middle" fill="#ff453a" font-size="11">ダウンサイド 137億</text>
+      <path d="M310,155 L630,155" stroke="#30d158" stroke-width="1.5"/>
+      <text x="470" y="170" text-anchor="middle" fill="#30d158" font-size="11">アップサイド 247億</text>
+      <text x="400" y="195" text-anchor="middle" fill="#a1a1a6" font-size="12">非対称性: ダウンサイドが現実的に発生しやすい</text>
+
+      <defs>
+        <linearGradient id="rangeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#ff453a;stop-opacity:0.6"/>
+          <stop offset="50%" style="stop-color:#ff9f0a;stop-opacity:0.4"/>
+          <stop offset="100%" style="stop-color:#30d158;stop-opacity:0.6"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </div>
+  <div class="grid-3" style="grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap:12px;">
+    <div class="card" style="padding:16px; text-align:center; border-color:rgba(255,69,58,0.3);">
+      <div style="font-size:12px; color:var(--accent-red); font-weight:600; margin-bottom:6px;">価格崩壊</div>
+      <div style="font-size:24px; font-weight:700; color:var(--accent-red);">-195億</div>
+      <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">AWS 50%値下げ<br>+供給過多</div>
+    </div>
+    <div class="card" style="padding:16px; text-align:center; border-color:rgba(255,69,58,0.3);">
+      <div style="font-size:12px; color:var(--accent-red); font-weight:600; margin-bottom:6px;">需要蒸発</div>
+      <div style="font-size:24px; font-weight:700; color:var(--accent-red);">-190億</div>
+      <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">推論効率10x改善<br>+景気後退</div>
+    </div>
+    <div class="card" style="padding:16px; text-align:center; border-color:rgba(255,159,10,0.3);">
+      <div style="font-size:12px; color:var(--accent-orange); font-weight:600; margin-bottom:6px;">コスト爆発</div>
+      <div style="font-size:24px; font-weight:700; color:var(--accent-orange);">-129億</div>
+      <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">電力高騰<br>+NVIDIA値上げ</div>
+    </div>
+    <div class="card" style="padding:16px; text-align:center; border-color:rgba(255,69,58,0.5);">
+      <div style="font-size:12px; color:var(--accent-red); font-weight:600; margin-bottom:6px;">複合最悪</div>
+      <div style="font-size:24px; font-weight:700; color:var(--accent-red);">-236億</div>
+      <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">全リスク<br>同時顕在化</div>
+    </div>
+    <div class="card" style="padding:16px; text-align:center; border-color:rgba(48,209,88,0.3);">
+      <div style="font-size:12px; color:var(--accent-green); font-weight:600; margin-bottom:6px;">楽観</div>
+      <div style="font-size:24px; font-weight:700; color:var(--accent-green);">+148億</div>
+      <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">需要爆発<br>+供給制約</div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 11: What we can / can't say ==================== -->
+<div class="slide" id="slide-11">
+  <span class="tag tag-purple">Reliability Assessment</span>
+  <h2>このモデルで言えること・言えないこと</h2>
+  <div class="grid-2" style="gap:48px;">
+    <div>
+      <h3 style="color:var(--accent-green);">言えること</h3>
+      <div class="card card-glow-green" style="padding:28px;">
+        <ul class="list-clean">
+          <li>GPU価格は年15-30%下落が続く<br><span style="font-size:13px; color:var(--text-secondary);">R²=0.978、11点の実績データで検証</span></li>
+          <li>費用構造は固定費支配（80%超）<br><span style="font-size:13px; color:var(--text-secondary);">CoreWeave S-1と構造的に一致</span></li>
+          <li>稼働率が損益を決定的に左右する<br><span style="font-size:13px; color:var(--text-secondary);">損益分岐稼働率 ~85%（Y1）</span></li>
+          <li>ベースケースでは投資回収困難<br><span style="font-size:13px; color:var(--text-secondary);">NPV -98.5億円（中央値パラメータ）</span></li>
+          <li>最大リスクは需給バランスとSWコスト<br><span style="font-size:13px; color:var(--text-secondary);">感度分析で定量的に確認</span></li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--accent-red);">言えないこと</h3>
+      <div class="card card-glow-red" style="padding:28px;">
+        <ul class="list-clean">
+          <li style="list-style:none;">
+            <span style="color:var(--accent-red);">&#x26A0;</span>
+            投資回収の「正確な確率」<br>
+            <span style="font-size:13px; color:var(--text-secondary);">9.3%は条件付き推定。真の確率ではない</span>
+          </li>
+          <li style="list-style:none;">
+            <span style="color:var(--accent-red);">&#x26A0;</span>
+            5年後以降の市場構造<br>
+            <span style="font-size:13px; color:var(--text-secondary);">次世代GPU、量子計算等の構造変化は含まない</span>
+          </li>
+          <li style="list-style:none;">
+            <span style="color:var(--accent-red);">&#x26A0;</span>
+            不連続イベントの影響<br>
+            <span style="font-size:13px; color:var(--text-secondary);">大口解約、NVIDIA政策転換、規制変更</span>
+          </li>
+          <li style="list-style:none;">
+            <span style="color:var(--accent-red);">&#x26A0;</span>
+            パラメータ間の相関構造<br>
+            <span style="font-size:13px; color:var(--text-secondary);">独立サンプリングで過度に分散する</span>
+          </li>
+          <li style="list-style:none;">
+            <span style="color:var(--accent-red);">&#x26A0;</span>
+            数式モデル自体の妥当性<br>
+            <span style="font-size:13px; color:var(--text-secondary);">DS(t)やα等の関数形は仮説にすぎない</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 12</div>
+</div>
+
+<!-- ==================== SLIDE 12: Summary ==================== -->
+<div class="slide" id="slide-12">
+  <span class="tag tag-blue">Summary</span>
+  <h1>
+    モデルの<span class="gradient-text">結論</span>
+  </h1>
+  <div class="divider"></div>
+  <div style="max-width:800px;">
+    <p style="font-size:22px; line-height:1.8; color:var(--text-secondary); margin-bottom:36px;">
+      GPU Cloud事業は<strong style="color:var(--text);">構造的に固定費が重く</strong>、
+      価格下落と競合激化の中で<strong style="color:var(--text);">持続的な黒字化が困難</strong>な事業モデル。
+      ただし楽観シナリオでは高リターンの可能性も存在する。
+    </p>
+
+    <div class="grid-3" style="margin-bottom:36px;">
+      <div class="card" style="text-align:center; padding:28px;">
+        <div style="font-size:13px; color:var(--accent-blue); font-weight:600; margin-bottom:8px;">信頼できる構造</div>
+        <div style="font-size:36px; font-weight:700; margin-bottom:4px;">3層DCF</div>
+        <div style="font-size:14px; color:var(--text-secondary);">価格減衰 R²=0.978<br>CoreWeave整合<br>11/11バリデーション</div>
+      </div>
+      <div class="card" style="text-align:center; padding:28px;">
+        <div style="font-size:13px; color:var(--accent-orange); font-weight:600; margin-bottom:8px;">不確実性の核心</div>
+        <div style="font-size:36px; font-weight:700; margin-bottom:4px;">需給</div>
+        <div style="font-size:14px; color:var(--text-secondary);">供給成長率: LOW信頼度<br>NPV変動幅 164億円<br>直接データなし</div>
+      </div>
+      <div class="card" style="text-align:center; padding:28px;">
+        <div style="font-size:13px; color:var(--accent-red); font-weight:600; margin-bottom:8px;">投資判断への示唆</div>
+        <div style="font-size:36px; font-weight:700; margin-bottom:4px;">慎重</div>
+        <div style="font-size:14px; color:var(--text-secondary);">NPV>0: 9.3%<br>ダウンサイドが非対称<br>段階的投資が合理的</div>
+      </div>
+    </div>
+
+    <div class="card" style="background:rgba(41,151,255,0.04); border-color:rgba(41,151,255,0.15); padding:24px;">
+      <p class="desc" style="font-size:15px; text-align:center;">
+        モデルは「答え」ではなく「思考の枠組み」。<br>
+        <strong>どのパラメータが変われば結論が変わるか</strong>を示すことに価値がある。
+      </p>
+    </div>
+  </div>
+  <div class="slide-number">12 / 12</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav-hint">← → キーまたはクリックでページ送り</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+  const total = slides.length;
+
+  function updateProgress() {
+    const pct = ((current + 1) / total) * 100;
+    document.getElementById('progressBar').style.width = pct + '%';
+  }
+
+  function goTo(n) {
+    if (n < 0 || n >= total) return;
+    slides[current].classList.remove('active');
+    current = n;
+    slides[current].classList.add('active');
+    updateProgress();
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goTo(current + 1); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); goTo(current - 1); }
+    if (e.key === 'Home') goTo(0);
+    if (e.key === 'End') goTo(total - 1);
+  });
+
+  document.addEventListener('click', (e) => {
+    if (e.clientX > window.innerWidth / 2) goTo(current + 1);
+    else goTo(current - 1);
+  });
+
+  // Touch support
+  let touchStartX = 0;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
+  document.addEventListener('touchend', (e) => {
+    const diff = touchStartX - e.changedTouches[0].clientX;
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) goTo(current + 1);
+      else goTo(current - 1);
+    }
+  });
+
+  updateProgress();
+</script>
+</body>
+</html>
