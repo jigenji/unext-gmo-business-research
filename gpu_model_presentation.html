@@ -375,142 +375,125 @@
   <span class="tag tag-blue">Architecture</span>
   <h2>モデルは3層構造</h2>
   <div class="diagram-container">
-    <svg width="900" height="720" viewBox="0 0 900 720">
+    <svg width="900" height="470" viewBox="0 0 900 470">
       <defs>
         <marker id="arrowUp" markerWidth="10" markerHeight="7" refX="5" refY="0" orient="auto-start-reverse">
           <polygon points="0,7 5,0 10,7" fill="#555"/>
         </marker>
-        <marker id="arrowDown" markerWidth="10" markerHeight="7" refX="5" refY="7" orient="auto">
-          <polygon points="0,0 5,7 10,0" fill="#666"/>
-        </marker>
       </defs>
 
       <!-- ===== Layer 3: Top ===== -->
-      <rect x="250" y="10" width="400" height="70" rx="16" fill="none" stroke="#bf5af2" stroke-width="2" opacity="0.8"/>
-      <rect x="250" y="10" width="400" height="70" rx="16" fill="#bf5af2" opacity="0.08"/>
-      <text x="450" y="35" text-anchor="middle" fill="#bf5af2" font-size="14" font-weight="600">LAYER 3 — 投資判断指標</text>
-      <text x="450" y="60" text-anchor="middle" fill="#f5f5f7" font-size="18" font-family="SF Mono, monospace">NPV / IRR / 回収期間</text>
+      <rect x="280" y="0" width="340" height="50" rx="14" fill="none" stroke="#bf5af2" stroke-width="2" opacity="0.8"/>
+      <rect x="280" y="0" width="340" height="50" rx="14" fill="#bf5af2" opacity="0.08"/>
+      <text x="450" y="20" text-anchor="middle" fill="#bf5af2" font-size="11" font-weight="600">LAYER 3 — 投資判断指標</text>
+      <text x="450" y="40" text-anchor="middle" fill="#f5f5f7" font-size="15" font-family="SF Mono, monospace">NPV / IRR / 回収期間</text>
 
       <!-- Arrow L3→L2 -->
-      <line x1="450" y1="80" x2="450" y2="110" stroke="#555" stroke-width="2" marker-end="url(#arrowUp)"/>
-      <text x="468" y="100" fill="#a1a1a6" font-size="12">FCF を割引</text>
+      <line x1="450" y1="50" x2="450" y2="68" stroke="#555" stroke-width="1.5" marker-end="url(#arrowUp)"/>
+      <text x="468" y="63" fill="#a1a1a6" font-size="10">FCF を割引</text>
 
       <!-- ===== Layer 2: P&L / CF — Hierarchical ===== -->
-      <rect x="100" y="110" width="700" height="200" rx="16" fill="none" stroke="#2997ff" stroke-width="2" opacity="0.8"/>
-      <rect x="100" y="110" width="700" height="200" rx="16" fill="#2997ff" opacity="0.06"/>
-      <text x="450" y="132" text-anchor="middle" fill="#2997ff" font-size="14" font-weight="600">LAYER 2 — P&L / キャッシュフロー計算</text>
+      <rect x="100" y="68" width="700" height="120" rx="14" fill="none" stroke="#2997ff" stroke-width="2" opacity="0.8"/>
+      <rect x="100" y="68" width="700" height="120" rx="14" fill="#2997ff" opacity="0.06"/>
+      <text x="450" y="84" text-anchor="middle" fill="#2997ff" font-size="11" font-weight="600">LAYER 2 — P&L / キャッシュフロー計算</text>
 
-      <!-- Tier 1: Primary output — FCF -->
-      <text x="155" y="152" fill="#a1a1a6" font-size="11" font-weight="600">求めるもの</text>
-      <rect x="250" y="140" width="400" height="46" rx="12" fill="#1a1a1a" stroke="#2997ff" stroke-width="1.5"/>
-      <text x="450" y="160" text-anchor="middle" fill="#2997ff" font-size="15" font-weight="600">FCF(t) = 営業利益×(1-τ) + 減価償却 − CAPEX</text>
-      <text x="450" y="178" text-anchor="middle" fill="#a1a1a6" font-size="11">フリーキャッシュフロー（各期）</text>
+      <!-- Primary: FCF -->
+      <text x="135" y="101" fill="#a1a1a6" font-size="9" font-weight="600">求めるもの</text>
+      <rect x="220" y="90" width="460" height="32" rx="10" fill="#1a1a1a" stroke="#2997ff" stroke-width="1.5"/>
+      <text x="450" y="110" text-anchor="middle" fill="#2997ff" font-size="12" font-weight="600">FCF(t) = 営業利益×(1-τ) + 減価償却 − CAPEX</text>
 
       <!-- Breakdown arrows -->
-      <line x1="310" y1="186" x2="225" y2="210" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <line x1="450" y1="186" x2="450" y2="210" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <line x1="590" y1="186" x2="675" y2="210" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="320" y1="122" x2="225" y2="138" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <line x1="450" y1="122" x2="450" y2="138" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <line x1="580" y1="122" x2="675" y2="138" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
 
-      <!-- Tier 2: Breakdown components -->
-      <text x="155" y="222" fill="#a1a1a6" font-size="11" font-weight="600">構成要素</text>
+      <!-- Breakdown components -->
+      <text x="135" y="147" fill="#a1a1a6" font-size="9" font-weight="600">構成要素</text>
+      <rect x="145" y="140" width="160" height="36" rx="8" fill="#1a1a1a" stroke="#555"/>
+      <text x="225" y="155" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="500">売上</text>
+      <text x="225" y="169" text-anchor="middle" fill="#a1a1a6" font-size="9">P(t) × U(t) × GPU数</text>
 
-      <!-- Revenue -->
-      <rect x="130" y="228" width="190" height="44" rx="10" fill="#1a1a1a" stroke="#555"/>
-      <text x="225" y="248" text-anchor="middle" fill="#64d2ff" font-size="13" font-weight="500">売上</text>
-      <text x="225" y="264" text-anchor="middle" fill="#a1a1a6" font-size="10">P(t) × U(t) × GPU数</text>
+      <rect x="325" y="140" width="250" height="36" rx="8" fill="#1a1a1a" stroke="#555"/>
+      <text x="450" y="155" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="500">コスト（電力 / OPEX）</text>
+      <text x="450" y="169" text-anchor="middle" fill="#a1a1a6" font-size="9">電力単価×PUE×稼働 + 保守</text>
 
-      <!-- Costs -->
-      <rect x="340" y="228" width="220" height="44" rx="10" fill="#1a1a1a" stroke="#555"/>
-      <text x="450" y="248" text-anchor="middle" fill="#64d2ff" font-size="13" font-weight="500">コスト（電力 / OPEX）</text>
-      <text x="450" y="264" text-anchor="middle" fill="#a1a1a6" font-size="10">電力単価×PUE×稼働 + 保守</text>
-
-      <!-- Depreciation + CAPEX -->
-      <rect x="580" y="228" width="190" height="44" rx="10" fill="#1a1a1a" stroke="#555"/>
-      <text x="675" y="248" text-anchor="middle" fill="#64d2ff" font-size="13" font-weight="500">減価償却 / CAPEX</text>
-      <text x="675" y="264" text-anchor="middle" fill="#a1a1a6" font-size="10">5年定額 / 初期投資</text>
-
-      <!-- Note: P(t), U(t) feeds into Revenue -->
-      <rect x="135" y="277" width="180" height="22" rx="6" fill="none" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2" opacity="0.6"/>
-      <text x="225" y="292" text-anchor="middle" fill="#ff9f0a" font-size="10" opacity="0.8">← Layer 1 の P(t), U(t) が入力</text>
+      <rect x="595" y="140" width="170" height="36" rx="8" fill="#1a1a1a" stroke="#555"/>
+      <text x="680" y="155" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="500">減価償却 / CAPEX</text>
+      <text x="680" y="169" text-anchor="middle" fill="#a1a1a6" font-size="9">5年定額 / 初期投資</text>
 
       <!-- Arrow L2→L1 -->
-      <line x1="450" y1="310" x2="450" y2="345" stroke="#555" stroke-width="2" marker-end="url(#arrowUp)"/>
-      <text x="468" y="332" fill="#a1a1a6" font-size="12">P(t), U(t) を入力</text>
+      <line x1="450" y1="188" x2="450" y2="210" stroke="#555" stroke-width="1.5" marker-end="url(#arrowUp)"/>
+      <text x="468" y="204" fill="#a1a1a6" font-size="10">P(t), U(t) を入力</text>
 
       <!-- ===== Layer 1: Market Dynamics — Hierarchical ===== -->
-      <rect x="50" y="345" width="800" height="370" rx="16" fill="none" stroke="#ff9f0a" stroke-width="2" opacity="0.8"/>
-      <rect x="50" y="345" width="800" height="370" rx="16" fill="#ff9f0a" opacity="0.06"/>
-      <text x="450" y="370" text-anchor="middle" fill="#ff9f0a" font-size="14" font-weight="600">LAYER 1 — 市場動学（最も重要 / 最も不確実）</text>
+      <rect x="50" y="210" width="800" height="258" rx="14" fill="none" stroke="#ff9f0a" stroke-width="2" opacity="0.8"/>
+      <rect x="50" y="210" width="800" height="258" rx="14" fill="#ff9f0a" opacity="0.06"/>
+      <text x="450" y="228" text-anchor="middle" fill="#ff9f0a" font-size="11" font-weight="600">LAYER 1 — 市場動学（最も重要 / 最も不確実）</text>
 
-      <!-- --- Tier 1: Primary outputs P(t), U(t) --- -->
-      <text x="110" y="395" fill="#a1a1a6" font-size="11" font-weight="600">求めるもの</text>
+      <!-- Primary: P(t), U(t) -->
+      <text x="105" y="248" fill="#a1a1a6" font-size="9" font-weight="600">求めるもの</text>
+      <rect x="100" y="237" width="300" height="40" rx="10" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1.5"/>
+      <text x="250" y="254" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="600">価格 P(t)</text>
+      <text x="250" y="270" text-anchor="middle" fill="#a1a1a6" font-size="10">P₀ × (1-δ)ᵗ × DS(t)</text>
 
-      <!-- P(t) primary box -->
-      <rect x="100" y="403" width="300" height="52" rx="12" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1.5"/>
-      <text x="250" y="424" text-anchor="middle" fill="#ff9f0a" font-size="15" font-weight="600">価格 P(t)</text>
-      <text x="250" y="443" text-anchor="middle" fill="#a1a1a6" font-size="11">P₀ × (1-δ)ᵗ × DS(t)</text>
+      <rect x="500" y="237" width="300" height="40" rx="10" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1.5"/>
+      <text x="650" y="254" text-anchor="middle" fill="#ff9f0a" font-size="13" font-weight="600">稼働率 U(t)</text>
+      <text x="650" y="270" text-anchor="middle" fill="#a1a1a6" font-size="10">R(t) × U₀ × C(t) × D(t)</text>
 
-      <!-- U(t) primary box -->
-      <rect x="500" y="403" width="300" height="52" rx="12" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1.5"/>
-      <text x="650" y="424" text-anchor="middle" fill="#ff9f0a" font-size="15" font-weight="600">稼働率 U(t)</text>
-      <text x="650" y="443" text-anchor="middle" fill="#a1a1a6" font-size="11">R(t) × U₀ × C(t) × D(t)</text>
+      <!-- Breakdown arrows -->
+      <line x1="175" y1="277" x2="175" y2="300" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <polygon points="171,298 179,298 175,303" fill="#666"/>
+      <line x1="325" y1="277" x2="325" y2="300" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <polygon points="321,298 329,298 325,303" fill="#666"/>
+      <line x1="575" y1="277" x2="575" y2="300" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <polygon points="571,298 579,298 575,303" fill="#666"/>
+      <line x1="725" y1="277" x2="725" y2="300" stroke="#666" stroke-width="1" stroke-dasharray="3,2"/>
+      <polygon points="721,298 729,298 725,303" fill="#666"/>
 
-      <!-- --- Arrows from primary to sub-components --- -->
-      <line x1="175" y1="455" x2="175" y2="490" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <polygon points="170,487 180,487 175,494" fill="#666"/>
-      <line x1="325" y1="455" x2="325" y2="490" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <polygon points="320,487 330,487 325,494" fill="#666"/>
-      <line x1="575" y1="455" x2="575" y2="490" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <polygon points="570,487 580,487 575,494" fill="#666"/>
-      <line x1="725" y1="455" x2="725" y2="490" stroke="#666" stroke-width="1.5" stroke-dasharray="4,3"/>
-      <polygon points="720,487 730,487 725,494" fill="#666"/>
+      <!-- Sub-components -->
+      <text x="105" y="312" fill="#a1a1a6" font-size="9" font-weight="600">構成要素</text>
+      <rect x="85" y="304" width="180" height="36" rx="8" fill="#1a1a1a" stroke="#555"/>
+      <text x="175" y="319" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="500">技術陳腐化 δ</text>
+      <text x="175" y="333" text-anchor="middle" fill="#a1a1a6" font-size="9">指数減衰 (1-δ)ᵗ</text>
 
-      <!-- --- Tier 2: Sub-components (breakdown) --- -->
-      <text x="110" y="492" fill="#a1a1a6" font-size="11" font-weight="600">構成要素</text>
-
-      <rect x="85" y="500" width="180" height="46" rx="10" fill="#1a1a1a" stroke="#555"/>
-      <text x="175" y="518" text-anchor="middle" fill="#64d2ff" font-size="12" font-weight="500">技術陳腐化 δ</text>
-      <text x="175" y="536" text-anchor="middle" fill="#a1a1a6" font-size="10">指数減衰 (1-δ)ᵗ</text>
-
-      <rect x="285" y="500" width="180" height="46" rx="10" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="4,2"/>
-      <text x="375" y="518" text-anchor="middle" fill="#ff9f0a" font-size="12" font-weight="500">需給 DS(t)</text>
-      <text x="375" y="536" text-anchor="middle" fill="#a1a1a6" font-size="10">(1+g_d)ᵗ / (1+g_s)ᵗ</text>
+      <rect x="285" y="304" width="180" height="36" rx="8" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="4,2"/>
+      <text x="375" y="319" text-anchor="middle" fill="#ff9f0a" font-size="11" font-weight="500">需給 DS(t)</text>
+      <text x="375" y="333" text-anchor="middle" fill="#a1a1a6" font-size="9">(1+g_d)ᵗ / (1+g_s)ᵗ</text>
 
       <!-- Shared indicator -->
-      <path d="M465,523 L485,523 Q500,523 500,510 L500,455" fill="none" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
-      <text x="490" y="480" fill="#ff9f0a" font-size="10" opacity="0.7">共有</text>
+      <path d="M465,322 L480,322 Q490,322 490,312 L490,277" fill="none" stroke="#ff9f0a" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+      <text x="485" y="295" fill="#ff9f0a" font-size="9" opacity="0.7">共有</text>
 
-      <rect x="485" y="500" width="180" height="46" rx="10" fill="#1a1a1a" stroke="#555"/>
-      <text x="575" y="518" text-anchor="middle" fill="#64d2ff" font-size="12" font-weight="500">ランプアップ R(t)</text>
-      <text x="575" y="536" text-anchor="middle" fill="#a1a1a6" font-size="10">S字カーブ (9ヶ月)</text>
+      <rect x="485" y="304" width="180" height="36" rx="8" fill="#1a1a1a" stroke="#555"/>
+      <text x="575" y="319" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="500">ランプアップ R(t)</text>
+      <text x="575" y="333" text-anchor="middle" fill="#a1a1a6" font-size="9">S字カーブ (9ヶ月)</text>
 
-      <rect x="685" y="500" width="150" height="46" rx="10" fill="#1a1a1a" stroke="#555"/>
-      <text x="760" y="518" text-anchor="middle" fill="#64d2ff" font-size="12" font-weight="500">競合 N(t)</text>
-      <text x="760" y="536" text-anchor="middle" fill="#a1a1a6" font-size="10">C(t) = 1-α×ΔN</text>
+      <rect x="685" y="304" width="140" height="36" rx="8" fill="#1a1a1a" stroke="#555"/>
+      <text x="755" y="319" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="500">競合 N(t)</text>
+      <text x="755" y="333" text-anchor="middle" fill="#a1a1a6" font-size="9">C(t) = 1-α×ΔN</text>
 
-      <!-- --- Tier 3: Fundamental drivers --- -->
-      <text x="110" y="572" fill="#a1a1a6" font-size="11" font-weight="600">基礎ドライバ</text>
+      <!-- Fundamental drivers -->
+      <text x="105" y="364" fill="#a1a1a6" font-size="9" font-weight="600">基礎ドライバ</text>
+      <line x1="175" y1="340" x2="175" y2="368" stroke="#555" stroke-width="1" stroke-dasharray="2,2"/>
+      <line x1="335" y1="340" x2="270" y2="368" stroke="#555" stroke-width="1" stroke-dasharray="2,2"/>
+      <line x1="415" y1="340" x2="440" y2="368" stroke="#555" stroke-width="1" stroke-dasharray="2,2"/>
+      <line x1="755" y1="340" x2="640" y2="368" stroke="#555" stroke-width="1" stroke-dasharray="2,2"/>
 
-      <line x1="175" y1="546" x2="175" y2="578" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="335" y1="546" x2="270" y2="578" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="415" y1="546" x2="440" y2="578" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
-      <line x1="760" y1="546" x2="640" y2="578" stroke="#555" stroke-width="1" stroke-dasharray="3,3"/>
+      <rect x="90" y="368" width="155" height="30" rx="6" fill="#1a1a1a" stroke="#444"/>
+      <text x="167" y="382" text-anchor="middle" fill="#a1a1a6" font-size="9">H100実績 R²=0.978</text>
+      <text x="167" y="393" text-anchor="middle" fill="#ff453a" font-size="9">MED</text>
 
-      <rect x="90" y="578" width="155" height="36" rx="8" fill="#1a1a1a" stroke="#444"/>
-      <text x="167" y="596" text-anchor="middle" fill="#a1a1a6" font-size="10">H100実績 R²=0.978</text>
-      <text x="167" y="608" text-anchor="middle" fill="#ff453a" font-size="10">MED</text>
+      <rect x="262" y="368" width="155" height="30" rx="6" fill="#1a1a1a" stroke="#444"/>
+      <text x="339" y="382" text-anchor="middle" fill="#a1a1a6" font-size="9">g_d=25% (4社調査)</text>
+      <text x="339" y="393" text-anchor="middle" fill="#ff9f0a" font-size="9">MED</text>
 
-      <rect x="262" y="578" width="155" height="36" rx="8" fill="#1a1a1a" stroke="#444"/>
-      <text x="339" y="596" text-anchor="middle" fill="#a1a1a6" font-size="10">g_d=25% (4社調査)</text>
-      <text x="339" y="608" text-anchor="middle" fill="#ff9f0a" font-size="10">MED</text>
+      <rect x="434" y="368" width="155" height="30" rx="6" fill="#1a1a1a" stroke="#444"/>
+      <text x="511" y="382" text-anchor="middle" fill="#a1a1a6" font-size="9">g_s=35% (逆推定)</text>
+      <text x="511" y="393" text-anchor="middle" fill="#ff453a" font-size="9">LOW</text>
 
-      <rect x="434" y="578" width="155" height="36" rx="8" fill="#1a1a1a" stroke="#444"/>
-      <text x="511" y="596" text-anchor="middle" fill="#a1a1a6" font-size="10">g_s=35% (逆推定)</text>
-      <text x="511" y="608" text-anchor="middle" fill="#ff453a" font-size="10">LOW</text>
-
-      <rect x="606" y="578" width="155" height="36" rx="8" fill="#1a1a1a" stroke="#444"/>
-      <text x="683" y="596" text-anchor="middle" fill="#a1a1a6" font-size="10">α=0.015 (仮定)</text>
-      <text x="683" y="608" text-anchor="middle" fill="#ff453a" font-size="10">LOW</text>
+      <rect x="606" y="368" width="155" height="30" rx="6" fill="#1a1a1a" stroke="#444"/>
+      <text x="683" y="382" text-anchor="middle" fill="#a1a1a6" font-size="9">α=0.015 (仮定)</text>
+      <text x="683" y="393" text-anchor="middle" fill="#ff453a" font-size="9">LOW</text>
     </svg>
   </div>
   <div class="slide-number">02 / 15</div>
