@@ -237,19 +237,7 @@
     z-index: 100;
   }
 
-  /* Animations */
-  @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(30px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-
-  .slide.active > * {
-    animation: fadeInUp 0.6s ease forwards;
-  }
-
-  .slide.active > *:nth-child(2) { animation-delay: 0.1s; }
-  .slide.active > *:nth-child(3) { animation-delay: 0.2s; }
-  .slide.active > *:nth-child(4) { animation-delay: 0.3s; }
+  /* Animations disabled */
 
   .big-number {
     font-size: 72px;
@@ -367,6 +355,10 @@
       <div class="metric-label">校正済みパラメータ</div>
     </div>
     <div>
+      <div class="big-number" style="color:var(--accent-purple);">15</div>
+      <div class="metric-label">スライド数</div>
+    </div>
+    <div>
       <div class="big-number" style="color:var(--accent-green);">10K</div>
       <div class="metric-label">モンテカルロ試行</div>
     </div>
@@ -375,7 +367,7 @@
       <div class="metric-label">バリデーション合格</div>
     </div>
   </div>
-  <div class="slide-number">01 / 12</div>
+  <div class="slide-number">01 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 2: 3-Layer Architecture ==================== -->
@@ -440,7 +432,7 @@
       </defs>
     </svg>
   </div>
-  <div class="slide-number">02 / 12</div>
+  <div class="slide-number">02 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 3: Price Function ==================== -->
@@ -510,7 +502,64 @@
       </div>
     </div>
   </div>
-  <div class="slide-number">03 / 12</div>
+  <div class="slide-number">03 / 15</div>
+</div>
+
+<!-- ==================== SLIDE 3b: P(t) Derivation Detail ==================== -->
+<div class="slide" id="slide-3b">
+  <span class="tag tag-orange">Derivation — P(t)</span>
+  <h2>価格関数の導出根拠</h2>
+  <div class="grid-2">
+    <div>
+      <h3>関数の説明</h3>
+      <div class="card" style="padding:20px; margin-bottom:16px;">
+        <div class="formula" style="font-size:14px;">P(t) = P₀ × (1 - δ)ᵗ × clip(DS(t), 0.25, 1.3)</div>
+        <p class="desc" style="margin-top:10px;">GPUの月額レンタル価格が、(1)技術陳腐化による自然減価と(2)需給バランスの2要因で変動するモデル。指数減衰＋需給乗数の積として表現。</p>
+      </div>
+
+      <h3>導出に使用したデータ</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-high">HIGH</span>
+          <strong>P₀ = 47.5万円/月</strong>
+        </div>
+        <p class="desc">GMO GPU Cloud料金ページから直接取得。専有プラン月額380万円/台(8GPU) ÷ 8 = 47.5万円/GPU。公開価格なので信頼性は最高。</p>
+      </div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-medium">MED</span>
+          <strong>δ = 10〜15%/年（定常期）</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> Silicon Data H100 Rental Index (SDH100RT) — Bloomberg公開の日次GPU価格指数。2023-01〜2026-01の17データポイント（うち公式index値7点）。<br>
+          <strong>導出:</strong> P(t) = (P₀ - P_floor) × e^(-λt) + P_floor でフィッティング。全期間λ≈0.042/月（年率39.5%）だが、これは初期バブル崩壊を含む。定常期（2024-09以降）λ≈0.030/月（年率30%）。5年スケールでは10-15%/年に収束すると仮定。<br>
+          <span style="color:var(--accent-orange);">⚠ 注意:</span> H100の2年分のデータから10年分を外挿。半減期16.5ヶ月は実測だが、floor近傍での長期挙動は未検証。
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-low">LOW</span>
+          <strong>DS(t) 需給バランス比</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> 直接データなし。以下の間接情報から構成:<br>
+          ・需要成長率 g_d=25%: 4社の市場調査CAGR中央値（MarketsandMarkets 26.5%, Fortune BI 35.8%, Mordor 28.74%, Grand View 16.0%）の保守的下限<br>
+          ・供給成長率 g_s=35%: H100価格60-70%下落（供給>需要の証拠）と300社以上の新規参入から逆算した推定値<br>
+          <strong>導出:</strong> DS(t) = (1+g_d)ᵗ / (1+g_s)ᵗ。需要・供給がそれぞれ指数成長すると仮定し、その比で需給バランスを表現。clip(0.25, 1.3)で極端値を制限。<br>
+          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> g_sに直接統計が存在しない。g_dは調査会社間で16〜36%と2倍以上の乖離。両者の比がモデル結果を支配するため、この不確実性がNPVに最大の影響を与える（感度分析で確認済み）。
+        </p>
+      </div>
+      <div class="card" style="padding:20px; background:rgba(255,159,10,0.06); border-color:rgba(255,159,10,0.2);">
+        <p class="desc" style="font-size:14px;">
+          <strong style="color:var(--accent-orange);">関数形の仮定:</strong>
+          指数減衰×需給乗数という関数形自体がモデル仮説。実際の価格変動はAWSの突発的値下げ（2025-06に44%値下げ）などステップ関数的に起こることが多く、連続関数による近似の限界がある。Epoch AI研究ではGPU FLOP/$の倍増期間は2.46年（95% CI: 2.24-2.72年）であり、年率10-15%の定常下落は歴史的傾向とおおむね整合。
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">04 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 4: Utilization Function ==================== -->
@@ -591,7 +640,77 @@
       </div>
     </div>
   </div>
-  <div class="slide-number">04 / 12</div>
+  <div class="slide-number">05 / 15</div>
+</div>
+
+<!-- ==================== SLIDE 4b: U(t) Derivation Detail ==================== -->
+<div class="slide" id="slide-4b">
+  <span class="tag tag-orange">Derivation — U(t)</span>
+  <h2>稼働率関数の導出根拠</h2>
+  <div class="grid-2">
+    <div>
+      <h3>関数の説明</h3>
+      <div class="card" style="padding:20px; margin-bottom:16px;">
+        <div class="formula" style="font-size:14px;">U(t) = clip(R(t) × U₀ × C(t) × D(t), 0.35, 0.95)</div>
+        <p class="desc" style="margin-top:10px;">GPUの実効稼働率を、(1)ランプアップ、(2)初期水準、(3)競合圧力、(4)需要ブーストの4要因の積として表現。最低35%〜最高95%にクリップ。</p>
+      </div>
+
+      <h3>各構成要素の導出</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-medium">MED</span>
+          <strong>R(t): ランプアップ（S字カーブ）</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> GMO実績 — 2024年11月サービス開始、9ヶ月後（2025年Q3頃）に月次黒字化達成。<br>
+          <strong>導出:</strong> ロジスティック関数 R(t) = 1 / (1 + e^(-k(t-t_mid)))。t_mid≈4.5ヶ月（中間点）、k≈1.5（傾き）。9ヶ月で95%到達。<br>
+          <span style="color:var(--accent-orange);">⚠ 注意:</span> GMO固有の実績。DC構築→テスト→顧客オンボーディングに通常6-18ヶ月必要とされ、9ヶ月は業界的に速い方。新規事業者では12-18ヶ月が現実的。
+        </p>
+      </div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-medium">MED</span>
+          <strong>U₀ = 75%: 初期定常稼働率</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> GMO「月次黒字化達成」→損益分岐稼働率(~50%)超過は確定。チューリング4年32億円契約等の長期案件あり。業界平均は15-30%（Aethir, Thunder Compute報告）。CoreWeave（長期契約型）は85%超。<br>
+          <strong>導出:</strong> 損益分岐(50%)＜U₀＜CoreWeave水準(85%)の中間値として75%を仮定。<br>
+          <span style="color:var(--accent-orange);">⚠ 注意:</span> GMOの正確な稼働率は非公開。月次黒字化は50%超の下限を示すが、上限の根拠が弱い。レポートによっては80%と仮定する場合もある。
+        </p>
+      </div>
+    </div>
+    <div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-low">LOW</span>
+          <strong>C(t) = max(1 - α×ΔN, 0.5): 競合圧力</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> 2024-25年の国内GPU Cloud新規参入実績: GMO, さくら(拡張), KDDI, ハイレゾ(拡張), ルチラ(拡張), SB(拡張) → 約3社/年。さくらの下方修正（158億→90-110億）は競争激化の間接証拠。<br>
+          <strong>導出:</strong> α=0.015（新規参入1社あたり1.5%の稼働率低下）は<strong>モデル固有のパラメータで、実績校正されていない</strong>。最低50%の「床」は市場撤退による自然減を想定。<br>
+          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> αの値に実証的根拠がない。実際にはハイパースケーラー（AWS/GCP）1社の値下げが独立系10社の参入より影響が大きいが、その異質性は未モデル化。線形仮定も非現実的（閾値効果がありうる）。
+        </p>
+      </div>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-low">LOW</span>
+          <strong>D(t) = clip(DS(t), 0.7, 1.15): 需要ブースト</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> P(t)のDS(t)と同じ需給バランス比から派生。<br>
+          <strong>導出:</strong> 需要超過(DS>1)時に稼働率が最大15%改善、供給過多時に最大30%低下と仮定。clip範囲(0.7〜1.15)は経験的推定。<br>
+          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> DS(t)自体が低信頼度であることに加え、clip範囲の設定に実証的根拠がない。需給→稼働率の因果メカニズムも単純化されている。
+        </p>
+      </div>
+      <div class="card" style="padding:20px; background:rgba(255,69,58,0.06); border-color:rgba(255,69,58,0.2);">
+        <p class="desc" style="font-size:14px;">
+          <strong style="color:var(--accent-red);">構造的課題:</strong>
+          「稼働率-単価トレードオフ」が未モデル化。高稼働率の源泉である長期契約は30-50%割引を伴うが、本モデルはU₀=75%とP₀=47.5万円を独立に仮定。チューリング契約実績（~40万円/月）は既に16%低い。
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">06 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 5: Revenue & Cost ==================== -->
@@ -656,7 +775,82 @@ Elec(t) = kW × PUE × 8760h × Rate(t)
       </div>
     </div>
   </div>
-  <div class="slide-number">05 / 12</div>
+  <div class="slide-number">07 / 15</div>
+</div>
+
+<!-- ==================== SLIDE 5b: Revenue & Cost Derivation Detail ==================== -->
+<div class="slide" id="slide-5b">
+  <span class="tag tag-blue">Derivation — Revenue & Cost</span>
+  <h2>売上・コスト関数の導出根拠</h2>
+  <div class="grid-2">
+    <div>
+      <h3>売上関数</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div class="formula" style="font-size:13px;">Rev(t) = Σᵢ [Nᵢ × Pᵢ(t) × βᵢ × U(t) × 12] / 10⁴</div>
+        <p class="desc" style="margin-top:10px;">
+          <strong>説明:</strong> DC事業の第一原理「容量×単価×稼働率」を数式化。GPU基数(N)、月額単価(P)、プレミアム倍率(β)、稼働率(U)、12ヶ月の積。<br>
+          <strong>データ:</strong><br>
+          ・N_H200 = 1,024基 <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> GMO公表（96→128ノード×8GPU）<br>
+          ・N_B300 = 200基 <span class="confidence-badge badge-medium" style="font-size:10px;">MED</span> GMO IR発表（25ノード×8GPU）<br>
+          ・β_B300 = 1.8倍 <span class="confidence-badge badge-low" style="font-size:10px;">LOW</span> Hyperstack B300 vs H200実勢価格比から推定。市場データ1.5-3倍の中間。B300の正式価格は未公開<br>
+          <strong>検証:</strong> Y1売上~27.4億円は、GMOの「初年度推定20-40億円」の範囲内。
+        </p>
+      </div>
+
+      <h3>電力コスト関数</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div class="formula" style="font-size:13px;">E(t) = Σᵢ Nᵢ×Wᵢ×[η+(1-η)×U(t)]×PUE×8760×rₑ/10⁸</div>
+        <p class="desc" style="margin-top:10px;">
+          <strong>説明:</strong> 電力コストを「固定（アイドル電力）＋変動（負荷比例電力）」の混合構造として分離。GPUはアイドル時もTDPの~40%を消費するため、電力費の大部分は固定費。<br>
+          <strong>データ:</strong><br>
+          ・W_H200 = 700W <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> NVIDIA公式TDP<br>
+          ・W_B300 = 1,200W <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> DGX B300 HGX版公式<br>
+          ・η = 40% <span class="confidence-badge badge-medium" style="font-size:10px;">MED</span> GPU単体15-20% + CPU/メモリ/NIC等のシステムベース電力でTDP全体の~40%。DC業界一般則30-60%の中間<br>
+          ・PUE = 1.30 <span class="confidence-badge badge-medium" style="font-size:10px;">MED</span> JDCC調査、日本最新DC 1.2-1.4の中間<br>
+          ・rₑ = 20円/kWh <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> 産業用17.5円+再エネ賦課金の中間<br>
+          <strong>検証:</strong> モデル出力~1.1億/年 vs レポート記載1.6-2.0億/年。やや過少だが、電力費が全コストの3-5%のため影響は軽微。
+        </p>
+      </div>
+    </div>
+    <div>
+      <h3>固定OPEX</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-low">LOW</span>
+          <strong>固定運営費 = 12.4億円/年</strong>
+        </div>
+        <p class="desc">
+          <strong>内訳と信頼性:</strong><br>
+          ・人件費 2.4億円: 30名×800万円と仮定。GMO非公開。GPU専門人材は年収1,000-1,500万円が相場であり、過少の可能性<br>
+          ・DC賃料 2.0億円: 福岡の借用型DC。個別費目はGMO非公開<br>
+          ・保守費 1.5億円: GPU故障率2-5%/年からの推定<br>
+          ・NW費 0.8億円: 業界実態では1.5-3.0億円の可能性<br>
+          ・SW費 0.4億円: NVIDIA AI Enterprise ($4,500/GPU/年)を含めると2.0億円以上の可能性<br>
+          ・営業費 1.0億円 / 管理費 0.5億円<br>
+          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> 個別費目はいずれもGMO非公開。合計コスト（約24億円）との整合から逆算した推定値。3チーム統合レビューでは年間5-14億円の過少評価の可能性を指摘。
+        </p>
+      </div>
+
+      <h3>減価償却</h3>
+      <div class="card" style="padding:20px; margin-bottom:12px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+          <span class="confidence-badge badge-high">HIGH</span>
+          <strong>Dep = CAPEX_net / 5年</strong>
+        </div>
+        <p class="desc">
+          <strong>データ:</strong> CAPEX 100億円（GMO公表）、助成金19.3億円（経産省認定）。法定耐用年数5年（国税庁「サーバー」）。定額法を想定。<br>
+          <strong>注意:</strong> 定率法の場合は初期に償却が集中し、税シールド効果でNPV +3〜8%の上振れ要因。また、経済的耐用年数はGPU世代交代（~2年サイクル）を考慮すると3-4年が妥当だが、会計上は5年で処理。
+        </p>
+      </div>
+      <div class="card" style="padding:20px; background:rgba(41,151,255,0.06); border-color:rgba(41,151,255,0.15);">
+        <p class="desc" style="font-size:14px;">
+          <strong style="color:var(--accent-blue);">コスト関数全体の信頼性:</strong>
+          減価償却（HIGH）が費用の60%を占めるため、コスト合計の精度は中程度。ただし欠落項目（SWライセンス、冗長性インフラ、スペアパーツ等）により総コストは20-55%過少評価の可能性がある。
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">08 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 6: DCF Layer ==================== -->
@@ -698,7 +892,7 @@ IRR: NPV(r)=0 を解く
       </p>
     </div>
   </div>
-  <div class="slide-number">06 / 12</div>
+  <div class="slide-number">09 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 7: Monte Carlo ==================== -->
@@ -787,7 +981,7 @@ IRR: NPV(r)=0 を解く
       </div>
     </div>
   </div>
-  <div class="slide-number">07 / 12</div>
+  <div class="slide-number">10 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 8: Variable Map ==================== -->
@@ -898,7 +1092,7 @@ IRR: NPV(r)=0 を解く
       <div><span class="confidence-badge badge-low">LOW</span></div>
     </div>
   </div>
-  <div class="slide-number">08 / 12</div>
+  <div class="slide-number">11 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 9: Tornado ==================== -->
@@ -983,7 +1177,7 @@ IRR: NPV(r)=0 を解く
       NPVを最も左右する上位2パラメータ（供給・需要成長率）は、いずれも信頼度が低い
     </p>
   </div>
-  <div class="slide-number">09 / 12</div>
+  <div class="slide-number">12 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 10: Stress Test ==================== -->
@@ -1058,7 +1252,7 @@ IRR: NPV(r)=0 を解く
       <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">需要爆発<br>+供給制約</div>
     </div>
   </div>
-  <div class="slide-number">10 / 12</div>
+  <div class="slide-number">13 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 11: What we can / can't say ==================== -->
@@ -1111,7 +1305,7 @@ IRR: NPV(r)=0 を解く
       </div>
     </div>
   </div>
-  <div class="slide-number">11 / 12</div>
+  <div class="slide-number">14 / 15</div>
 </div>
 
 <!-- ==================== SLIDE 12: Summary ==================== -->
@@ -1153,7 +1347,7 @@ IRR: NPV(r)=0 を解く
       </p>
     </div>
   </div>
-  <div class="slide-number">12 / 12</div>
+  <div class="slide-number">15 / 15</div>
 </div>
 
 <!-- Navigation -->
