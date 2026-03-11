@@ -33,15 +33,17 @@ css_overrides = """
   .slide {
     display: flex !important;
     width: 100% !important;
-    height: auto !important;
-    min-height: 700px !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
     page-break-after: always !important;
     break-after: page !important;
-    padding: 40px 50px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    padding: 30px 40px !important;
     position: relative !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     flex-direction: column !important;
-    justify-content: center !important;
+    justify-content: flex-start !important;
     background: #ffffff !important;
   }
 
@@ -112,6 +114,19 @@ css_overrides = """
   /* SVG text colors - override dark theme fills */
   /* Note: SVG inline fills can't be overridden by CSS easily,
      but key structural elements will still be visible on white */
+
+  /* Compact layout for PDF */
+  h2 { font-size: 26px !important; margin-bottom: 10px !important; }
+  h3 { font-size: 16px !important; margin-bottom: 8px !important; }
+  .tag { margin-bottom: 8px !important; padding: 4px 12px !important; font-size: 11px !important; }
+  .grid-2 { gap: 16px !important; }
+  .card { padding: 8px 10px !important; margin-bottom: 4px !important; }
+  .desc { font-size: 11px !important; line-height: 1.5 !important; }
+  .diagram-container svg { max-height: 340px !important; }
+  .param-row { padding: 6px 0 !important; font-size: 12px !important; }
+  .param-name { font-size: 12px !important; }
+  .param-value { font-size: 11px !important; }
+  .param-source { font-size: 10px !important; }
 
   /* Hide navigation elements */
   .nav-hint, .progress-bar { display: none !important; }

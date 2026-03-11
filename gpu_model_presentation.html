@@ -76,10 +76,10 @@
   }
 
   h2 {
-    font-size: 40px;
+    font-size: 36px;
     font-weight: 600;
     letter-spacing: -1px;
-    margin-bottom: 40px;
+    margin-bottom: 20px;
     line-height: 1.2;
   }
 
@@ -355,7 +355,7 @@
       <div class="metric-label">校正済みパラメータ</div>
     </div>
     <div>
-      <div class="big-number" style="color:var(--accent-purple);">15</div>
+      <div class="big-number" style="color:var(--accent-purple);">19</div>
       <div class="metric-label">スライド数</div>
     </div>
     <div>
@@ -367,7 +367,7 @@
       <div class="metric-label">バリデーション合格</div>
     </div>
   </div>
-  <div class="slide-number">01 / 15</div>
+  <div class="slide-number">01 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 2: 3-Layer Architecture ==================== -->
@@ -496,7 +496,7 @@
       <text x="683" y="393" text-anchor="middle" fill="#ff453a" font-size="9">LOW</text>
     </svg>
   </div>
-  <div class="slide-number">02 / 15</div>
+  <div class="slide-number">02 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 3: Price Function ==================== -->
@@ -566,64 +566,358 @@
       </div>
     </div>
   </div>
-  <div class="slide-number">03 / 15</div>
+  <div class="slide-number">03 / 19</div>
 </div>
 
-<!-- ==================== SLIDE 3b: P(t) Derivation Detail ==================== -->
+<!-- ==================== SLIDE 3b: δ Derivation ==================== -->
 <div class="slide" id="slide-3b">
-  <span class="tag tag-orange">Derivation — P(t)</span>
-  <h2>価格関数の導出根拠</h2>
+  <span class="tag tag-orange">Derivation — δ 価格下落率</span>
+  <h2>δ の推定: 4つの方法が ~30%/年 に収束</h2>
   <div class="grid-2">
     <div>
-      <h3>関数の説明</h3>
-      <div class="card" style="padding:20px; margin-bottom:16px;">
-        <div class="formula" style="font-size:14px;">P(t) = P₀ × (1 - δ)ᵗ × clip(DS(t), 0.25, 1.3)</div>
-        <p class="desc" style="margin-top:10px;">GPUの月額レンタル価格が、(1)技術陳腐化による自然減価と(2)需給バランスの2要因で変動するモデル。指数減衰＋需給乗数の積として表現。</p>
-      </div>
+      <div class="diagram-container">
+        <svg width="440" height="400" viewBox="0 0 440 400">
+          <!-- Title -->
+          <text x="220" y="20" text-anchor="middle" fill="#a1a1a6" font-size="12">年間価格下落率 δ（%）— 4手法の比較</text>
 
-      <h3>導出に使用したデータ</h3>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-high">HIGH</span>
-          <strong>P₀ = 47.5万円/月</strong>
-        </div>
-        <p class="desc">GMO GPU Cloud料金ページから直接取得。専有プラン月額380万円/台(8GPU) ÷ 8 = 47.5万円/GPU。公開価格なので信頼性は最高。</p>
-      </div>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-medium">MED</span>
-          <strong>δ = 10〜15%/年（定常期）</strong>
-        </div>
-        <p class="desc">
-          <strong>データ:</strong> Silicon Data H100 Rental Index (SDH100RT) — Bloomberg公開の日次GPU価格指数。2023-01〜2026-01の17データポイント（うち公式index値7点）。<br>
-          <strong>導出:</strong> P(t) = (P₀ - P_floor) × e^(-λt) + P_floor でフィッティング。全期間λ≈0.042/月（年率39.5%）だが、これは初期バブル崩壊を含む。定常期（2024-09以降）λ≈0.030/月（年率30%）。5年スケールでは10-15%/年に収束すると仮定。<br>
-          <span style="color:var(--accent-orange);">⚠ 注意:</span> H100の2年分のデータから10年分を外挿。半減期16.5ヶ月は実測だが、floor近傍での長期挙動は未検証。
-        </p>
+          <!-- Axis -->
+          <line x1="180" y1="40" x2="180" y2="330" stroke="#555" stroke-width="1"/>
+          <line x1="180" y1="330" x2="420" y2="330" stroke="#555" stroke-width="1"/>
+          <!-- Scale labels -->
+          <text x="180" y="348" fill="#a1a1a6" font-size="10">0%</text>
+          <text x="240" y="348" fill="#a1a1a6" font-size="10">15%</text>
+          <text x="300" y="348" fill="#a1a1a6" font-size="10">30%</text>
+          <text x="360" y="348" fill="#a1a1a6" font-size="10">45%</text>
+          <!-- Grid lines -->
+          <line x1="240" y1="40" x2="240" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="300" y1="40" x2="300" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="360" y1="40" x2="360" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+
+          <!-- Method 1: H100 market prices -->
+          <text x="170" y="75" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">H100実勢価格</text>
+          <text x="170" y="90" text-anchor="end" fill="#a1a1a6" font-size="10">SDH100RT指数</text>
+          <rect x="292" y="62" width="56" height="28" rx="4" fill="#2997ff" opacity="0.7"/>
+          <line x1="260" y1="76" x2="370" y2="76" stroke="#2997ff" stroke-width="2"/>
+          <circle cx="260" cy="76" r="3" fill="#2997ff"/>
+          <circle cx="370" cy="76" r="3" fill="#2997ff"/>
+          <text x="315" y="56" text-anchor="middle" fill="#2997ff" font-size="11" font-weight="600">28-40%</text>
+          <rect x="140" y="96" width="30" height="16" rx="4" fill="rgba(48,209,88,0.15)"/>
+          <text x="155" y="108" text-anchor="middle" fill="#30d158" font-size="9" font-weight="600">HIGH</text>
+
+          <!-- Method 2: Epoch AI -->
+          <text x="170" y="155" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">Epoch AI研究</text>
+          <text x="170" y="170" text-anchor="end" fill="#a1a1a6" font-size="10">FLOP/$長期トレンド</text>
+          <rect x="280" y="142" width="40" height="28" rx="4" fill="#bf5af2" opacity="0.7"/>
+          <line x1="250" y1="156" x2="340" y2="156" stroke="#bf5af2" stroke-width="2"/>
+          <circle cx="250" cy="156" r="3" fill="#bf5af2"/>
+          <circle cx="340" cy="156" r="3" fill="#bf5af2"/>
+          <text x="300" y="136" text-anchor="middle" fill="#bf5af2" font-size="11" font-weight="600">25-35%</text>
+          <rect x="140" y="176" width="30" height="16" rx="4" fill="rgba(48,209,88,0.15)"/>
+          <text x="155" y="188" text-anchor="middle" fill="#30d158" font-size="9" font-weight="600">HIGH</text>
+
+          <!-- Method 3: AWS price cuts -->
+          <text x="170" y="235" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">AWSの値下げ</text>
+          <text x="170" y="250" text-anchor="end" fill="#a1a1a6" font-size="10">P5/P4d 実績</text>
+          <rect x="280" y="222" width="40" height="28" rx="4" fill="#ff9f0a" opacity="0.7"/>
+          <line x1="250" y1="236" x2="340" y2="236" stroke="#ff9f0a" stroke-width="2"/>
+          <circle cx="250" cy="236" r="3" fill="#ff9f0a"/>
+          <circle cx="340" cy="236" r="3" fill="#ff9f0a"/>
+          <text x="300" y="216" text-anchor="middle" fill="#ff9f0a" font-size="11" font-weight="600">25-35%</text>
+          <rect x="140" y="256" width="30" height="16" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="155" y="268" text-anchor="middle" fill="#ff9f0a" font-size="9" font-weight="600">MED</text>
+
+          <!-- Method 4: Gen-over-gen -->
+          <text x="170" y="315" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">世代間比較</text>
+          <text x="170" y="330" text-anchor="end" fill="#a1a1a6" font-size="10">A100→H100→B200</text>
+          <rect x="280" y="302" width="20" height="28" rx="4" fill="#64d2ff" opacity="0.7"/>
+          <line x1="250" y1="316" x2="320" y2="316" stroke="#64d2ff" stroke-width="2"/>
+          <circle cx="250" cy="316" r="3" fill="#64d2ff"/>
+          <circle cx="320" cy="316" r="3" fill="#64d2ff"/>
+          <text x="290" y="296" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="600">25-30%</text>
+          <rect x="140" y="336" width="30" height="16" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="155" y="348" text-anchor="middle" fill="#ff9f0a" font-size="9" font-weight="600">MED</text>
+
+          <!-- Convergence zone -->
+          <rect x="280" y="38" width="40" height="295" rx="0" fill="#30d158" opacity="0.06"/>
+          <line x1="300" y1="38" x2="300" y2="333" stroke="#30d158" stroke-width="2" stroke-dasharray="6,3"/>
+          <text x="300" y="380" text-anchor="middle" fill="#30d158" font-size="13" font-weight="700">収束: ~30%</text>
+        </svg>
       </div>
     </div>
     <div>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-low">LOW</span>
-          <strong>DS(t) 需給バランス比</strong>
+      <h3 style="color:var(--accent-orange);">推定方法と根拠データ</h3>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2997ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法1: H100レンタル実勢価格</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
         </div>
-        <p class="desc">
-          <strong>データ:</strong> 直接データなし。以下の間接情報から構成:<br>
-          ・需要成長率 g_d=25%: 4社の市場調査CAGR中央値（MarketsandMarkets 26.5%, Fortune BI 35.8%, Mordor 28.74%, Grand View 16.0%）の保守的下限<br>
-          ・供給成長率 g_s=35%: H100価格60-70%下落（供給>需要の証拠）と300社以上の新規参入から逆算した推定値<br>
-          <strong>導出:</strong> DS(t) = (1+g_d)ᵗ / (1+g_s)ᵗ。需要・供給がそれぞれ指数成長すると仮定し、その比で需給バランスを表現。clip(0.25, 1.3)で極端値を制限。<br>
-          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> g_sに直接統計が存在しない。g_dは調査会社間で16〜36%と2倍以上の乖離。両者の比がモデル結果を支配するため、この不確実性がNPVに最大の影響を与える（感度分析で確認済み）。
-        </p>
+        <p class="desc" style="font-size:13px;">SDH100RT指数（30社以上の日次データ）:<br>2023中 $8-12/hr → 2024/09 $3.06 → 2025/12 $2.00。<br>定常期の年率下落 = <strong>28%</strong></p>
       </div>
-      <div class="card" style="padding:20px; background:rgba(255,159,10,0.06); border-color:rgba(255,159,10,0.2);">
-        <p class="desc" style="font-size:14px;">
-          <strong style="color:var(--accent-orange);">関数形の仮定:</strong>
-          指数減衰×需給乗数という関数形自体がモデル仮説。実際の価格変動はAWSの突発的値下げ（2025-06に44%値下げ）などステップ関数的に起こることが多く、連続関数による近似の限界がある。Epoch AI研究ではGPU FLOP/$の倍増期間は2.46年（95% CI: 2.24-2.72年）であり、年率10-15%の定常下落は歴史的傾向とおおむね整合。
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#bf5af2;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法2: Epoch AI 長期FLOP/$研究</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
+        </div>
+        <p class="desc" style="font-size:13px;">470モデル15年分析。FLOP/$倍増期間 = 2.5年。<br>「固定性能のHWは毎年30%安くなる」(Epoch AI公式)。<br>2025更新値: AI chip性能/$ 年率 <strong>37%</strong> 改善</p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ff9f0a;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法3: AWSの値下げ実績</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">2025/06: P5(H100) <strong>44%値下げ</strong>、P4d(A100) 33%値下げ、P5en(H200) 25%値下げ。年率換算 ~25-30%</p>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#64d2ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法4: GPU世代間 $/TFLOP</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">A100: $48/TFLOP → H100: $30 → B200: $11/TFLOP。<br>H100→B200 (3年): 63%低下 = 年率 <strong>28%</strong></p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">04 / 19</div>
+</div>
+
+<!-- ==================== SLIDE 3c: g_d Derivation ==================== -->
+<div class="slide" id="slide-3c">
+  <span class="tag tag-orange">Derivation — g_d 需要成長率</span>
+  <h2>g_d の推定: 4つの方法で 25-40%/年</h2>
+  <div class="grid-2">
+    <div>
+      <div class="diagram-container">
+        <svg width="440" height="400" viewBox="0 0 440 400">
+          <text x="220" y="20" text-anchor="middle" fill="#a1a1a6" font-size="12">年間需要成長率 g_d（%）— 4手法の比較</text>
+
+          <!-- Axis -->
+          <line x1="180" y1="40" x2="180" y2="330" stroke="#555" stroke-width="1"/>
+          <line x1="180" y1="330" x2="420" y2="330" stroke="#555" stroke-width="1"/>
+          <text x="180" y="348" fill="#a1a1a6" font-size="10">0%</text>
+          <text x="240" y="348" fill="#a1a1a6" font-size="10">25%</text>
+          <text x="300" y="348" fill="#a1a1a6" font-size="10">50%</text>
+          <text x="360" y="348" fill="#a1a1a6" font-size="10">75%</text>
+          <text x="420" y="348" fill="#a1a1a6" font-size="10">100%</text>
+          <line x1="240" y1="40" x2="240" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="300" y1="40" x2="300" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="360" y1="40" x2="360" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+
+          <!-- Method 1: Market research -->
+          <text x="170" y="75" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">市場調査CAGR</text>
+          <text x="170" y="90" text-anchor="end" fill="#a1a1a6" font-size="10">8社GPUaaS予測</text>
+          <rect x="230" y="62" width="50" height="28" rx="4" fill="#2997ff" opacity="0.7"/>
+          <line x1="220" y1="76" x2="300" y2="76" stroke="#2997ff" stroke-width="2"/>
+          <circle cx="220" cy="76" r="3" fill="#2997ff"/>
+          <circle cx="300" cy="76" r="3" fill="#2997ff"/>
+          <text x="255" y="56" text-anchor="middle" fill="#2997ff" font-size="11" font-weight="600">22-36%</text>
+          <rect x="140" y="96" width="30" height="16" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="155" y="108" text-anchor="middle" fill="#ff9f0a" font-size="9" font-weight="600">MED</text>
+
+          <!-- Method 2: Hyperscaler CAPEX -->
+          <text x="170" y="155" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">HyperscalerCAPEX</text>
+          <text x="170" y="170" text-anchor="end" fill="#a1a1a6" font-size="10">5社実績2024-26</text>
+          <rect x="285" y="142" width="65" height="28" rx="4" fill="#30d158" opacity="0.7"/>
+          <line x1="270" y1="156" x2="380" y2="156" stroke="#30d158" stroke-width="2"/>
+          <circle cx="270" cy="156" r="3" fill="#30d158"/>
+          <circle cx="380" cy="156" r="3" fill="#30d158"/>
+          <text x="320" y="136" text-anchor="middle" fill="#30d158" font-size="11" font-weight="600">40-65%</text>
+          <rect x="140" y="176" width="30" height="16" rx="4" fill="rgba(48,209,88,0.15)"/>
+          <text x="155" y="188" text-anchor="middle" fill="#30d158" font-size="9" font-weight="600">HIGH</text>
+
+          <!-- Method 3: NVIDIA DC revenue -->
+          <text x="170" y="235" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">NVIDIA DC売上</text>
+          <text x="170" y="250" text-anchor="end" fill="#a1a1a6" font-size="10">FY22-26実績</text>
+          <rect x="325" y="222" width="55" height="28" rx="4" fill="#bf5af2" opacity="0.7"/>
+          <line x1="300" y1="236" x2="410" y2="236" stroke="#bf5af2" stroke-width="2"/>
+          <circle cx="300" cy="236" r="3" fill="#bf5af2"/>
+          <circle cx="410" cy="236" r="3" fill="#bf5af2"/>
+          <text x="350" y="216" text-anchor="middle" fill="#bf5af2" font-size="11" font-weight="600">60-80%*</text>
+          <rect x="140" y="256" width="30" height="16" rx="4" fill="rgba(48,209,88,0.15)"/>
+          <text x="155" y="268" text-anchor="middle" fill="#30d158" font-size="9" font-weight="600">HIGH</text>
+
+          <!-- Method 4: AI compute demand -->
+          <text x="170" y="315" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">AI計算量需要</text>
+          <text x="170" y="330" text-anchor="end" fill="#a1a1a6" font-size="10">Epoch AI研究</text>
+          <rect x="260" y="302" width="60" height="28" rx="4" fill="#64d2ff" opacity="0.7"/>
+          <line x1="240" y1="316" x2="360" y2="316" stroke="#64d2ff" stroke-width="2"/>
+          <circle cx="240" cy="316" r="3" fill="#64d2ff"/>
+          <circle cx="360" cy="316" r="3" fill="#64d2ff"/>
+          <text x="290" y="296" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="600">30-70%</text>
+          <rect x="140" y="336" width="30" height="16" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="155" y="348" text-anchor="middle" fill="#ff9f0a" font-size="9" font-weight="600">MED</text>
+
+          <!-- Convergence zone for medium-term -->
+          <rect x="250" y="38" width="50" height="295" rx="0" fill="#30d158" opacity="0.06"/>
+          <line x1="275" y1="38" x2="275" y2="333" stroke="#30d158" stroke-width="2" stroke-dasharray="6,3"/>
+          <text x="275" y="380" text-anchor="middle" fill="#30d158" font-size="12" font-weight="700">中期収束: ~40%</text>
+          <text x="275" y="395" text-anchor="middle" fill="#a1a1a6" font-size="10">*価格上昇を除く実質ベース</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--accent-orange);">推定方法と根拠データ</h3>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2997ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法1: 市場調査レポートCAGR</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">8社のGPUaaS市場予測（2024-2030）:<br>Grand View 21.6% / MarketsandMarkets 26.5% / Mordor 28.7% / Fortune BI 35.8%。<br>中央値 ~<strong>27-29%</strong>（長期平滑化）</p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#30d158;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法2: Hyperscaler CAPEX実績</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
+        </div>
+        <p class="desc" style="font-size:13px;">AWS+MS+Google+Meta+Oracle AI投資:<br>2022: $150B → 2024: $256B → 2025: <strong>$443B</strong> → 2026E: $602-690B。CAGR ~<strong>53%</strong></p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#bf5af2;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法3: NVIDIA DC売上</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
+        </div>
+        <p class="desc" style="font-size:13px;">FY22 $10.6B → FY26 $193.7B（4年CAGR <strong>107%</strong>）。<br>GPU単価上昇(20-30%/年)を除く実質 = ~<strong>60-80%</strong>。<br>直近FY26は +68% YoY</p>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#64d2ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法4: AI訓練計算量</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">フロンティアモデル計算量 年4-5倍増加。<br>HW効率改善(~3x/年)を差引くと実質 <strong>30-70%</strong>。<br>推論需要の急成長も追加要因</p>
+      </div>
+      <div class="card" style="padding:12px; background:rgba(255,159,10,0.06); border-color:rgba(255,159,10,0.2); margin-top:10px;">
+        <p class="desc" style="font-size:12px;">
+          <strong style="color:var(--accent-orange);">注意:</strong>
+          近年(2024-26)は55-70%と高いが、中期(2027-)は35-50%に減速、長期は25-30%に収束する見通し。現行モデルの25%は長期値としては妥当だが、近年を過小評価。
         </p>
       </div>
     </div>
   </div>
-  <div class="slide-number">04 / 15</div>
+  <div class="slide-number">05 / 19</div>
+</div>
+
+<!-- ==================== SLIDE 3d: g_s Derivation ==================== -->
+<div class="slide" id="slide-3d">
+  <span class="tag tag-orange">Derivation — g_s 供給成長率</span>
+  <h2>g_s の推定: 4つの方法で 35-65%/年</h2>
+  <div class="grid-2">
+    <div>
+      <div class="diagram-container">
+        <svg width="440" height="400" viewBox="0 0 440 400">
+          <text x="220" y="20" text-anchor="middle" fill="#a1a1a6" font-size="12">年間供給成長率 g_s（%）— 4手法の比較</text>
+
+          <line x1="180" y1="40" x2="180" y2="330" stroke="#555" stroke-width="1"/>
+          <line x1="180" y1="330" x2="420" y2="330" stroke="#555" stroke-width="1"/>
+          <text x="180" y="348" fill="#a1a1a6" font-size="10">0%</text>
+          <text x="228" y="348" fill="#a1a1a6" font-size="10">25%</text>
+          <text x="276" y="348" fill="#a1a1a6" font-size="10">50%</text>
+          <text x="324" y="348" fill="#a1a1a6" font-size="10">75%</text>
+          <text x="372" y="348" fill="#a1a1a6" font-size="10">100%</text>
+          <line x1="228" y1="40" x2="228" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="276" y1="40" x2="276" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="324" y1="40" x2="324" y2="330" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+
+          <!-- Method 1: NVIDIA shipments -->
+          <text x="170" y="75" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">NVIDIA出荷量</text>
+          <text x="170" y="90" text-anchor="end" fill="#a1a1a6" font-size="10">みずほ推計</text>
+          <rect x="240" y="62" width="25" height="28" rx="4" fill="#2997ff" opacity="0.7"/>
+          <line x1="230" y1="76" x2="280" y2="76" stroke="#2997ff" stroke-width="2"/>
+          <circle cx="230" cy="76" r="3" fill="#2997ff"/>
+          <circle cx="280" cy="76" r="3" fill="#2997ff"/>
+          <text x="255" y="56" text-anchor="middle" fill="#2997ff" font-size="11" font-weight="600">34-41%</text>
+          <rect x="140" y="96" width="30" height="16" rx="4" fill="rgba(48,209,88,0.15)"/>
+          <text x="155" y="108" text-anchor="middle" fill="#30d158" font-size="9" font-weight="600">HIGH</text>
+
+          <!-- Method 2: DC capacity -->
+          <text x="170" y="155" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">DC容量拡張</text>
+          <text x="170" y="170" text-anchor="end" fill="#a1a1a6" font-size="10">新設+CoWoS</text>
+          <rect x="260" y="142" width="55" height="28" rx="4" fill="#30d158" opacity="0.7"/>
+          <line x1="250" y1="156" x2="340" y2="156" stroke="#30d158" stroke-width="2"/>
+          <circle cx="250" cy="156" r="3" fill="#30d158"/>
+          <circle cx="340" cy="156" r="3" fill="#30d158"/>
+          <text x="285" y="136" text-anchor="middle" fill="#30d158" font-size="11" font-weight="600">40-65%</text>
+          <rect x="140" y="176" width="30" height="16" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="155" y="188" text-anchor="middle" fill="#ff9f0a" font-size="9" font-weight="600">MED</text>
+
+          <!-- Method 3: Price reverse -->
+          <text x="170" y="235" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">価格からの逆算</text>
+          <text x="170" y="250" text-anchor="end" fill="#a1a1a6" font-size="10">需給均衡仮定</text>
+          <rect x="305" y="222" width="55" height="28" rx="4" fill="#ff9f0a" opacity="0.7"/>
+          <line x1="276" y1="236" x2="400" y2="236" stroke="#ff9f0a" stroke-width="2"/>
+          <circle cx="276" cy="236" r="3" fill="#ff9f0a"/>
+          <circle cx="400" cy="236" r="3" fill="#ff9f0a"/>
+          <text x="333" y="216" text-anchor="middle" fill="#ff9f0a" font-size="11" font-weight="600">50-100%</text>
+          <rect x="140" y="256" width="30" height="16" rx="4" fill="rgba(255,69,58,0.15)"/>
+          <text x="155" y="268" text-anchor="middle" fill="#ff453a" font-size="9" font-weight="600">LOW</text>
+
+          <!-- Method 4: Revenue/ASP -->
+          <text x="170" y="315" text-anchor="end" fill="#f5f5f7" font-size="12" font-weight="500">NVIDIA売上/ASP</text>
+          <text x="170" y="330" text-anchor="end" fill="#a1a1a6" font-size="10">数量分解</text>
+          <rect x="250" y="302" width="40" height="28" rx="4" fill="#64d2ff" opacity="0.7"/>
+          <line x1="230" y1="316" x2="310" y2="316" stroke="#64d2ff" stroke-width="2"/>
+          <circle cx="230" cy="316" r="3" fill="#64d2ff"/>
+          <circle cx="310" cy="316" r="3" fill="#64d2ff"/>
+          <text x="270" y="296" text-anchor="middle" fill="#64d2ff" font-size="11" font-weight="600">35-55%</text>
+          <rect x="140" y="336" width="30" height="16" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="155" y="348" text-anchor="middle" fill="#ff9f0a" font-size="9" font-weight="600">MED</text>
+
+          <!-- Convergence zone -->
+          <rect x="230" y="38" width="50" height="295" rx="0" fill="#30d158" opacity="0.06"/>
+          <line x1="255" y1="38" x2="255" y2="333" stroke="#30d158" stroke-width="2" stroke-dasharray="6,3"/>
+          <text x="255" y="380" text-anchor="middle" fill="#30d158" font-size="12" font-weight="700">ベース: ~35-40%</text>
+          <text x="255" y="395" text-anchor="middle" fill="#a1a1a6" font-size="10">物理出荷ベース</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--accent-orange);">推定方法と根拠データ</h3>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2997ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法1: NVIDIA GPU出荷数</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
+        </div>
+        <p class="desc" style="font-size:13px;">みずほ推計: 2023年 376万基 → 2025年E 650-700万基。<br>ユニットCAGR = <strong>34%</strong>。設置ベースは退役考慮で<strong>~41%</strong>成長</p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#30d158;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法2: DC容量+CoWoS拡張</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">TSMC CoWoSウェハ: 2024 37万枚 → 2026E <strong>100万枚</strong> (CAGR 64%)。300社超のGPU Cloud新規参入。日本: 政府補助金7,250億円</p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ff9f0a;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法3: 価格下落からの逆推定</strong>
+          <span class="confidence-badge badge-low" style="margin-left:auto;">LOW</span>
+        </div>
+        <p class="desc" style="font-size:13px;">H100レンタル 76%下落(33ヶ月)。需要25%成長を仮定し需給均衡から逆算 → g_s = <strong>65-75%</strong>（初期は希少性解消を含み過大）</p>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#64d2ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法4: NVIDIA売上÷ASP分解</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">DC売上 $15B→$194B、推定ASP $4K→$22.5K。<br>数量成長 ~<strong>41%</strong>。AMD+TPU+Trainium込みで <strong>45-55%</strong></p>
+      </div>
+      <div class="card" style="padding:12px; background:rgba(255,69,58,0.06); border-color:rgba(255,69,58,0.2); margin-top:10px;">
+        <p class="desc" style="font-size:12px;">
+          <strong style="color:var(--accent-red);">注意:</strong>
+          物理ユニット(35-45%)とクラウド利用可能容量(40-65%)と価格含意供給(50-100%)で異なる。モデルでは物理ベースの35%を採用するのが安全だが、neocloudブームが続けば実効供給はこれを上回る。
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">06 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 4: Utilization Function ==================== -->
@@ -704,77 +998,251 @@
       </div>
     </div>
   </div>
-  <div class="slide-number">05 / 15</div>
+  <div class="slide-number">07 / 19</div>
 </div>
 
-<!-- ==================== SLIDE 4b: U(t) Derivation Detail ==================== -->
+<!-- ==================== SLIDE 4b: U₀ Derivation ==================== -->
 <div class="slide" id="slide-4b">
-  <span class="tag tag-orange">Derivation — U(t)</span>
-  <h2>稼働率関数の導出根拠</h2>
+  <span class="tag tag-orange">Derivation — U₀ 初期稼働率</span>
+  <h2>U₀ の推定: 3つの方法で 75% に収束</h2>
   <div class="grid-2">
     <div>
-      <h3>関数の説明</h3>
-      <div class="card" style="padding:20px; margin-bottom:16px;">
-        <div class="formula" style="font-size:14px;">U(t) = clip(R(t) × U₀ × C(t) × D(t), 0.35, 0.95)</div>
-        <p class="desc" style="margin-top:10px;">GPUの実効稼働率を、(1)ランプアップ、(2)初期水準、(3)競合圧力、(4)需要ブーストの4要因の積として表現。最低35%〜最高95%にクリップ。</p>
-      </div>
+      <div class="diagram-container">
+        <svg width="440" height="420" viewBox="0 0 440 420">
+          <text x="220" y="20" text-anchor="middle" fill="#a1a1a6" font-size="12">GPU Cloud稼働率（%）— 各社・各方法の比較</text>
 
-      <h3>各構成要素の導出</h3>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-medium">MED</span>
-          <strong>R(t): ランプアップ（S字カーブ）</strong>
-        </div>
-        <p class="desc">
-          <strong>データ:</strong> GMO実績 — 2024年11月サービス開始、9ヶ月後（2025年Q3頃）に月次黒字化達成。<br>
-          <strong>導出:</strong> ロジスティック関数 R(t) = 1 / (1 + e^(-k(t-t_mid)))。t_mid≈4.5ヶ月（中間点）、k≈1.5（傾き）。9ヶ月で95%到達。<br>
-          <span style="color:var(--accent-orange);">⚠ 注意:</span> GMO固有の実績。DC構築→テスト→顧客オンボーディングに通常6-18ヶ月必要とされ、9ヶ月は業界的に速い方。新規事業者では12-18ヶ月が現実的。
-        </p>
-      </div>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-medium">MED</span>
-          <strong>U₀ = 75%: 初期定常稼働率</strong>
-        </div>
-        <p class="desc">
-          <strong>データ:</strong> GMO「月次黒字化達成」→損益分岐稼働率(~50%)超過は確定。チューリング4年32億円契約等の長期案件あり。業界平均は15-30%（Aethir, Thunder Compute報告）。CoreWeave（長期契約型）は85%超。<br>
-          <strong>導出:</strong> 損益分岐(50%)＜U₀＜CoreWeave水準(85%)の中間値として75%を仮定。<br>
-          <span style="color:var(--accent-orange);">⚠ 注意:</span> GMOの正確な稼働率は非公開。月次黒字化は50%超の下限を示すが、上限の根拠が弱い。レポートによっては80%と仮定する場合もある。
-        </p>
+          <!-- Horizontal bar chart -->
+          <line x1="160" y1="40" x2="160" y2="390" stroke="#555" stroke-width="1"/>
+          <line x1="160" y1="390" x2="420" y2="390" stroke="#555" stroke-width="1"/>
+          <!-- Scale -->
+          <text x="160" y="406" fill="#a1a1a6" font-size="10">0%</text>
+          <text x="225" y="406" fill="#a1a1a6" font-size="10">25%</text>
+          <text x="290" y="406" fill="#a1a1a6" font-size="10">50%</text>
+          <text x="355" y="406" fill="#a1a1a6" font-size="10">75%</text>
+          <text x="420" y="406" fill="#a1a1a6" font-size="10">100%</text>
+          <line x1="225" y1="40" x2="225" y2="390" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="290" y1="40" x2="290" y2="390" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+          <line x1="355" y1="40" x2="355" y2="390" stroke="#333" stroke-width="0.5" stroke-dasharray="3,3"/>
+
+          <!-- Section A: Public companies -->
+          <text x="155" y="55" text-anchor="end" fill="#2997ff" font-size="11" font-weight="600">公開企業の実績</text>
+
+          <text x="155" y="78" text-anchor="end" fill="#f5f5f7" font-size="11">CoreWeave</text>
+          <rect x="160" y="66" width="210" height="20" rx="4" fill="#30d158" opacity="0.5"/>
+          <text x="375" y="80" fill="#30d158" font-size="11" font-weight="600">80-90%</text>
+
+          <text x="155" y="108" text-anchor="end" fill="#f5f5f7" font-size="11">Lambda Labs</text>
+          <rect x="160" y="96" width="198" height="20" rx="4" fill="#2997ff" opacity="0.5"/>
+          <text x="363" y="110" fill="#2997ff" font-size="11" font-weight="600">~80%</text>
+
+          <text x="155" y="138" text-anchor="end" fill="#f5f5f7" font-size="11">Aethir (業界平均)</text>
+          <rect x="160" y="126" width="58" height="20" rx="4" fill="#ff453a" opacity="0.5"/>
+          <text x="223" y="140" fill="#ff453a" font-size="11" font-weight="600">15-30%</text>
+
+          <text x="155" y="168" text-anchor="end" fill="#f5f5f7" font-size="11">Hyperscaler平均</text>
+          <rect x="160" y="156" width="172" height="20" rx="4" fill="#ff9f0a" opacity="0.5"/>
+          <text x="337" y="170" fill="#ff9f0a" font-size="11" font-weight="600">65-75%</text>
+
+          <!-- Section B: GMO back-calc -->
+          <text x="155" y="205" text-anchor="end" fill="#bf5af2" font-size="11" font-weight="600">GMO逆算推定</text>
+
+          <text x="155" y="228" text-anchor="end" fill="#f5f5f7" font-size="11">損益分岐点</text>
+          <rect x="160" y="216" width="151" height="20" rx="4" fill="#bf5af2" opacity="0.3"/>
+          <line x1="311" y1="216" x2="311" y2="236" stroke="#bf5af2" stroke-width="2"/>
+          <text x="316" y="230" fill="#bf5af2" font-size="11" font-weight="600">≥ 59%</text>
+
+          <text x="155" y="258" text-anchor="end" fill="#f5f5f7" font-size="11">Turing契約分</text>
+          <rect x="160" y="246" width="46" height="20" rx="4" fill="#64d2ff" opacity="0.4"/>
+          <text x="211" y="260" fill="#64d2ff" font-size="11">~18% 確保済</text>
+
+          <!-- Section C: Industry survey -->
+          <text x="155" y="295" text-anchor="end" fill="#ff9f0a" font-size="11" font-weight="600">業界調査</text>
+
+          <text x="155" y="318" text-anchor="end" fill="#f5f5f7" font-size="11">LBNL DC平均</text>
+          <rect x="160" y="306" width="130" height="20" rx="4" fill="#a1a1a6" opacity="0.3"/>
+          <text x="295" y="320" fill="#a1a1a6" font-size="11">~50%</text>
+
+          <text x="155" y="348" text-anchor="end" fill="#f5f5f7" font-size="11">GPU訓練中</text>
+          <rect x="160" y="336" width="230" height="20" rx="4" fill="#30d158" opacity="0.3"/>
+          <text x="395" y="350" fill="#30d158" font-size="11">80-93%</text>
+
+          <text x="155" y="378" text-anchor="end" fill="#f5f5f7" font-size="11">混合ワークロード</text>
+          <rect x="160" y="366" width="185" height="20" rx="4" fill="#ff9f0a" opacity="0.3"/>
+          <text x="350" y="380" fill="#ff9f0a" font-size="11">60-80%</text>
+
+          <!-- Convergence line -->
+          <line x1="355" y1="40" x2="355" y2="390" stroke="#30d158" stroke-width="2.5" stroke-dasharray="8,4"/>
+          <text x="355" y="420" text-anchor="middle" fill="#30d158" font-size="13" font-weight="700">推奨: 75%</text>
+        </svg>
       </div>
     </div>
     <div>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-low">LOW</span>
-          <strong>C(t) = max(1 - α×ΔN, 0.5): 競合圧力</strong>
+      <h3 style="color:var(--accent-orange);">推定方法と根拠データ</h3>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2997ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法1: 公開企業の開示</strong>
+          <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
         </div>
-        <p class="desc">
-          <strong>データ:</strong> 2024-25年の国内GPU Cloud新規参入実績: GMO, さくら(拡張), KDDI, ハイレゾ(拡張), ルチラ(拡張), SB(拡張) → 約3社/年。さくらの下方修正（158億→90-110億）は競争激化の間接証拠。<br>
-          <strong>導出:</strong> α=0.015（新規参入1社あたり1.5%の稼働率低下）は<strong>モデル固有のパラメータで、実績校正されていない</strong>。最低50%の「床」は市場撤退による自然減を想定。<br>
-          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> αの値に実証的根拠がない。実際にはハイパースケーラー（AWS/GCP）1社の値下げが独立系10社の参入より影響が大きいが、その異質性は未モデル化。線形仮定も非現実的（閾値効果がありうる）。
+        <p class="desc" style="font-size:13px;">
+          <strong>CoreWeave</strong> S-1: バックログ$15.1B/4年、25万GPU → 配分稼働率 <strong>80-90%</strong>（長期契約型）<br>
+          <strong>Lambda Labs</strong>: ~80%でビジネスモデル構築<br>
+          <strong>Aethir報告</strong>: 業界平均 15-30%（計算利用率。レンタル稼働率とは異なる）
         </p>
       </div>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-low">LOW</span>
-          <strong>D(t) = clip(DS(t), 0.7, 1.15): 需要ブースト</strong>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#bf5af2;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法2: GMO損益分岐逆算</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
         </div>
-        <p class="desc">
-          <strong>データ:</strong> P(t)のDS(t)と同じ需給バランス比から派生。<br>
-          <strong>導出:</strong> 需要超過(DS>1)時に稼働率が最大15%改善、供給過多時に最大30%低下と仮定。clip範囲(0.7〜1.15)は経験的推定。<br>
-          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> DS(t)自体が低信頼度であることに加え、clip範囲の設定に実証的根拠がない。需給→稼働率の因果メカニズムも単純化されている。
+        <p class="desc" style="font-size:13px;">
+          純CAPEX 80.7億、年間償却16.1億+OPEX 8.6億 → BEP稼働率 <strong>~59%</strong><br>
+          9ヶ月で月次黒字化 → 59%超は確定。<br>
+          Turing契約(32億/4年)で <strong>~18%</strong> は確保済 → 残り41%を市場で獲得
         </p>
       </div>
-      <div class="card" style="padding:20px; background:rgba(255,69,58,0.06); border-color:rgba(255,69,58,0.2);">
-        <p class="desc" style="font-size:14px;">
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ff9f0a;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法3: 業界調査・ベンチマーク</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">
+          LBNL (2024): DC平均 ~50%<br>
+          GPU訓練時: 80-93% / 推論時: 40-60%<br>
+          混合ワークロード: <strong>60-80%</strong><br>
+          DC業界BEP閾値: 60-70%
+        </p>
+      </div>
+      <div class="card" style="padding:12px; background:rgba(48,209,88,0.06); border-color:rgba(48,209,88,0.2);">
+        <p class="desc" style="font-size:12px;">
+          <strong style="color:var(--accent-green);">結論:</strong>
+          損益分岐(59%) &lt; U₀ &lt; CoreWeave(85%)。GMO長期契約実績+黒字化実績から <strong>75%</strong> が妥当な中央値。悲観60% / 楽観85%で感度分析。
+        </p>
+      </div>
+      <div class="card" style="padding:12px; background:rgba(255,69,58,0.06); border-color:rgba(255,69,58,0.2); margin-top:8px;">
+        <p class="desc" style="font-size:12px;">
           <strong style="color:var(--accent-red);">構造的課題:</strong>
-          「稼働率-単価トレードオフ」が未モデル化。高稼働率の源泉である長期契約は30-50%割引を伴うが、本モデルはU₀=75%とP₀=47.5万円を独立に仮定。チューリング契約実績（~40万円/月）は既に16%低い。
+          高稼働率の源泉である長期契約は30-50%割引を伴う。本モデルはU₀=75%とP₀=47.5万を独立に仮定しているが、実際にはトレードオフ関係。
         </p>
       </div>
     </div>
   </div>
-  <div class="slide-number">06 / 15</div>
+  <div class="slide-number">08 / 19</div>
+</div>
+
+<!-- ==================== SLIDE 4c: α Derivation ==================== -->
+<div class="slide" id="slide-4c">
+  <span class="tag tag-orange">Derivation — α 競合感度</span>
+  <h2>α の推定: 3つの方法で 0.015-0.020</h2>
+  <div class="grid-2">
+    <div>
+      <div class="diagram-container">
+        <svg width="440" height="420" viewBox="0 0 440 420">
+          <text x="220" y="20" text-anchor="middle" fill="#a1a1a6" font-size="12">新規参入1社あたりの稼働率低下幅（%）</text>
+
+          <!-- Visual: 3 estimation methods converging -->
+          <!-- Method 1: Cloud industry precedent -->
+          <rect x="30" y="50" width="380" height="100" rx="12" fill="#1a1a1a" stroke="#2997ff" stroke-width="1.5"/>
+          <text x="50" y="72" fill="#2997ff" font-size="12" font-weight="600">方法1: クラウド業界先例</text>
+          <rect x="370" y="56" width="30" height="14" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="385" y="67" text-anchor="middle" fill="#ff9f0a" font-size="8" font-weight="600">MED</text>
+
+          <!-- AWS market share diagram -->
+          <rect x="50" y="84" width="120" height="30" rx="6" fill="#2997ff" opacity="0.4"/>
+          <text x="110" y="104" text-anchor="middle" fill="#f5f5f7" font-size="11">AWS シェア</text>
+          <text x="180" y="104" fill="#a1a1a6" font-size="10">→</text>
+          <rect x="195" y="84" width="100" height="30" rx="6" fill="#2997ff" opacity="0.25"/>
+          <text x="245" y="104" text-anchor="middle" fill="#f5f5f7" font-size="11">-10pp/3年</text>
+          <text x="50" y="140" fill="#a1a1a6" font-size="11">6件の競争イベント → 1件あたり <tspan fill="#2997ff" font-weight="600">~1.7%</tspan></text>
+          <text x="50" y="140" fill="#a1a1a6" font-size="11">         → α = <tspan fill="#2997ff" font-weight="600">0.010-0.020</tspan></text>
+
+          <!-- Method 2: Sakura analysis -->
+          <rect x="30" y="170" width="380" height="100" rx="12" fill="#1a1a1a" stroke="#ff9f0a" stroke-width="1.5"/>
+          <text x="50" y="192" fill="#ff9f0a" font-size="12" font-weight="600">方法2: さくらインターネット下方修正</text>
+          <rect x="370" y="176" width="30" height="14" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="385" y="187" text-anchor="middle" fill="#ff9f0a" font-size="8" font-weight="600">MED</text>
+
+          <!-- Sakura revenue bar -->
+          <rect x="50" y="204" width="160" height="24" rx="6" fill="#ff9f0a" opacity="0.4"/>
+          <text x="130" y="220" text-anchor="middle" fill="#f5f5f7" font-size="11">当初 158億</text>
+          <rect x="50" y="232" width="90" height="24" rx="6" fill="#ff453a" opacity="0.4"/>
+          <text x="95" y="248" text-anchor="middle" fill="#f5f5f7" font-size="11">修正 85億</text>
+          <text x="155" y="248" fill="#ff453a" font-size="11" font-weight="600">▼46%</text>
+          <text x="50" y="262" fill="#a1a1a6" font-size="11">競合分 ~半分、3社 → α = <tspan fill="#ff9f0a" font-weight="600">0.015-0.035</tspan></text>
+
+          <!-- Method 3: Cournot theory -->
+          <rect x="30" y="290" width="380" height="90" rx="12" fill="#1a1a1a" stroke="#bf5af2" stroke-width="1.5"/>
+          <text x="50" y="312" fill="#bf5af2" font-size="12" font-weight="600">方法3: クールノー競争モデル</text>
+          <rect x="370" y="296" width="30" height="14" rx="4" fill="rgba(255,159,10,0.15)"/>
+          <text x="385" y="307" text-anchor="middle" fill="#ff9f0a" font-size="8" font-weight="600">MED</text>
+
+          <text x="50" y="335" fill="#a1a1a6" font-size="11">N=8社 → +1社でシェア減 = 1/[N(N+1)] = <tspan fill="#bf5af2" font-weight="600">1.4%</tspan></text>
+          <text x="50" y="355" fill="#a1a1a6" font-size="11">需給ギャップ調整後 → α = <tspan fill="#bf5af2" font-weight="600">0.010-0.025</tspan></text>
+
+          <!-- Convergence -->
+          <rect x="30" y="395" width="380" height="25" rx="8" fill="#30d158" opacity="0.1"/>
+          <text x="220" y="413" text-anchor="middle" fill="#30d158" font-size="14" font-weight="700">3手法の収束: α = 0.015 - 0.020</text>
+        </svg>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--accent-orange);">推定方法と根拠データ</h3>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#2997ff;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法1: クラウドIaaS先例</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">
+          AWS IaaSシェア: 2-3年で~10pp低下、6件の競争イベント。<br>
+          1件あたり <strong>~1.7pp</strong> のシェア喪失。<br>
+          市場成長(22% CAGR)調整後の稼働率影響 = <strong>1.0-2.0%</strong><br>
+          CDN業界: マージン7pp低下/5年 → 弱者淘汰パターン確認
+        </p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#ff9f0a;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法2: さくら下方修正分析</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">
+          GPU Cloud売上: <strong>158億 → 85億</strong>（46%減）<br>
+          要因分解: 競合 ~50%、大口契約喪失 ~50%<br>
+          競合分を3社の新規参入で割ると = <strong>7-8%/社（売上）</strong><br>
+          価格低下分を除く稼働率影響 = <strong>3-5%/社</strong>
+        </p>
+      </div>
+      <div class="card" style="padding:16px; margin-bottom:10px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span style="width:12px;height:12px;border-radius:50%;background:#bf5af2;flex-shrink:0;"></span>
+          <strong style="font-size:14px;">方法3: クールノー競争理論</strong>
+          <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
+        </div>
+        <p class="desc" style="font-size:13px;">
+          対称N社クールノー均衡: 1社増 → 各社シェア <strong>1/[N(N+1)]</strong> 減<br>
+          N=8: 1.4pp低下（シェアの11.1%）<br>
+          供給超過(g_s-g_d=10%)調整後 = <strong>1.0-2.5%</strong>
+        </p>
+      </div>
+      <div class="card" style="padding:12px; background:rgba(48,209,88,0.06); border-color:rgba(48,209,88,0.2);">
+        <p class="desc" style="font-size:12px;">
+          <strong style="color:var(--accent-green);">結論:</strong>
+          α = 0.015 は3手法すべてのレンジ内。保守推奨値は <strong>0.020</strong>。<br>
+          国内GPU Cloud参入: GMO, さくら, KDDI, SB, NTTPC, ハイレゾ, ルチラ + Hyperscaler 4社 = <strong>計11社</strong>
+        </p>
+      </div>
+      <div class="card" style="padding:12px; background:rgba(255,69,58,0.06); border-color:rgba(255,69,58,0.2); margin-top:8px;">
+        <p class="desc" style="font-size:12px;">
+          <strong style="color:var(--accent-red);">注意:</strong>
+          Hyperscaler 1社(AWS値下げ)のインパクト > 独立系10社。この異質性は線形αでは捕捉できない。閾値効果の可能性もあり。
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">09 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 5: Revenue & Cost ==================== -->
@@ -839,82 +1307,127 @@ Elec(t) = kW × PUE × 8760h × Rate(t)
       </div>
     </div>
   </div>
-  <div class="slide-number">07 / 15</div>
+  <div class="slide-number">10 / 19</div>
 </div>
 
-<!-- ==================== SLIDE 5b: Revenue & Cost Derivation Detail ==================== -->
+<!-- ==================== SLIDE 5b: Base Parameters Derivation ==================== -->
 <div class="slide" id="slide-5b">
-  <span class="tag tag-blue">Derivation — Revenue & Cost</span>
-  <h2>売上・コスト関数の導出根拠</h2>
-  <div class="grid-2">
-    <div>
-      <h3>売上関数</h3>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div class="formula" style="font-size:13px;">Rev(t) = Σᵢ [Nᵢ × Pᵢ(t) × βᵢ × U(t) × 12] / 10⁴</div>
-        <p class="desc" style="margin-top:10px;">
-          <strong>説明:</strong> DC事業の第一原理「容量×単価×稼働率」を数式化。GPU基数(N)、月額単価(P)、プレミアム倍率(β)、稼働率(U)、12ヶ月の積。<br>
-          <strong>データ:</strong><br>
-          ・N_H200 = 1,024基 <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> GMO公表（96→128ノード×8GPU）<br>
-          ・N_B300 = 200基 <span class="confidence-badge badge-medium" style="font-size:10px;">MED</span> GMO IR発表（25ノード×8GPU）<br>
-          ・β_B300 = 1.8倍 <span class="confidence-badge badge-low" style="font-size:10px;">LOW</span> Hyperstack B300 vs H200実勢価格比から推定。市場データ1.5-3倍の中間。B300の正式価格は未公開<br>
-          <strong>検証:</strong> Y1売上~27.4億円は、GMOの「初年度推定20-40億円」の範囲内。
-        </p>
+  <span class="tag tag-blue">Derivation — 基盤パラメータ</span>
+  <h2>PUE・電力・WACC・B300プレミアム</h2>
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+    <div class="card" style="padding:16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <strong style="font-size:15px; color:var(--accent-blue);">PUE = 1.30 → 推奨 1.20</strong>
+        <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
       </div>
-
-      <h3>電力コスト関数</h3>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div class="formula" style="font-size:13px;">E(t) = Σᵢ Nᵢ×Wᵢ×[η+(1-η)×U(t)]×PUE×8760×rₑ/10⁸</div>
-        <p class="desc" style="margin-top:10px;">
-          <strong>説明:</strong> 電力コストを「固定（アイドル電力）＋変動（負荷比例電力）」の混合構造として分離。GPUはアイドル時もTDPの~40%を消費するため、電力費の大部分は固定費。<br>
-          <strong>データ:</strong><br>
-          ・W_H200 = 700W <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> NVIDIA公式TDP<br>
-          ・W_B300 = 1,200W <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> DGX B300 HGX版公式<br>
-          ・η = 40% <span class="confidence-badge badge-medium" style="font-size:10px;">MED</span> GPU単体15-20% + CPU/メモリ/NIC等のシステムベース電力でTDP全体の~40%。DC業界一般則30-60%の中間<br>
-          ・PUE = 1.30 <span class="confidence-badge badge-medium" style="font-size:10px;">MED</span> JDCC調査、日本最新DC 1.2-1.4の中間<br>
-          ・rₑ = 20円/kWh <span class="confidence-badge badge-high" style="font-size:10px;">HIGH</span> 産業用17.5円+再エネ賦課金の中間<br>
-          <strong>検証:</strong> モデル出力~1.1億/年 vs レポート記載1.6-2.0億/年。やや過少だが、電力費が全コストの3-5%のため影響は軽微。
-        </p>
+      <div class="diagram-container">
+        <svg width="340" height="100" viewBox="0 0 340 100">
+          <!-- PUE scale -->
+          <line x1="20" y1="50" x2="320" y2="50" stroke="#555" stroke-width="1"/>
+          <text x="20" y="70" fill="#a1a1a6" font-size="9">1.0</text>
+          <text x="95" y="70" fill="#a1a1a6" font-size="9">1.1</text>
+          <text x="170" y="70" fill="#a1a1a6" font-size="9">1.2</text>
+          <text x="245" y="70" fill="#a1a1a6" font-size="9">1.3</text>
+          <text x="320" y="70" fill="#a1a1a6" font-size="9">1.4</text>
+          <!-- Range markers -->
+          <rect x="50" y="30" width="40" height="15" rx="3" fill="#30d158" opacity="0.4"/>
+          <text x="70" y="25" text-anchor="middle" fill="#30d158" font-size="8">液浸冷却</text>
+          <rect x="95" y="30" width="75" height="15" rx="3" fill="#2997ff" opacity="0.4"/>
+          <text x="133" y="25" text-anchor="middle" fill="#2997ff" font-size="8">液冷(DLC)</text>
+          <rect x="200" y="30" width="120" height="15" rx="3" fill="#ff9f0a" opacity="0.4"/>
+          <text x="260" y="25" text-anchor="middle" fill="#ff9f0a" font-size="8">空冷(新設)</text>
+          <!-- Current & recommended -->
+          <circle cx="245" cy="50" r="5" fill="#ff453a"/>
+          <text x="245" y="90" text-anchor="middle" fill="#ff453a" font-size="9">現行1.30</text>
+          <circle cx="170" cy="50" r="5" fill="#30d158"/>
+          <text x="170" y="90" text-anchor="middle" fill="#30d158" font-size="9">推奨1.20</text>
+        </svg>
       </div>
+      <p class="desc" style="font-size:11px;">GPU DC は液冷必須（B300: 140kW/rack）。<br>日本2030年規制 PUE≤1.40。JDCC先進DC: 1.2-1.3</p>
     </div>
-    <div>
-      <h3>固定OPEX</h3>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-low">LOW</span>
-          <strong>固定運営費 = 12.4億円/年</strong>
-        </div>
-        <p class="desc">
-          <strong>内訳と信頼性:</strong><br>
-          ・人件費 2.4億円: 30名×800万円と仮定。GMO非公開。GPU専門人材は年収1,000-1,500万円が相場であり、過少の可能性<br>
-          ・DC賃料 2.0億円: 福岡の借用型DC。個別費目はGMO非公開<br>
-          ・保守費 1.5億円: GPU故障率2-5%/年からの推定<br>
-          ・NW費 0.8億円: 業界実態では1.5-3.0億円の可能性<br>
-          ・SW費 0.4億円: NVIDIA AI Enterprise ($4,500/GPU/年)を含めると2.0億円以上の可能性<br>
-          ・営業費 1.0億円 / 管理費 0.5億円<br>
-          <span style="color:var(--accent-red);">⚠ 信頼性が低い理由:</span> 個別費目はいずれもGMO非公開。合計コスト（約24億円）との整合から逆算した推定値。3チーム統合レビューでは年間5-14億円の過少評価の可能性を指摘。
-        </p>
+    <div class="card" style="padding:16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <strong style="font-size:15px; color:var(--accent-blue);">電力 = 20円 → 推奨 17円/kWh</strong>
+        <span class="confidence-badge badge-high" style="margin-left:auto;">HIGH</span>
       </div>
-
-      <h3>減価償却</h3>
-      <div class="card" style="padding:20px; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-          <span class="confidence-badge badge-high">HIGH</span>
-          <strong>Dep = CAPEX_net / 5年</strong>
-        </div>
-        <p class="desc">
-          <strong>データ:</strong> CAPEX 100億円（GMO公表）、助成金19.3億円（経産省認定）。法定耐用年数5年（国税庁「サーバー」）。定額法を想定。<br>
-          <strong>注意:</strong> 定率法の場合は初期に償却が集中し、税シールド効果でNPV +3〜8%の上振れ要因。また、経済的耐用年数はGPU世代交代（~2年サイクル）を考慮すると3-4年が妥当だが、会計上は5年で処理。
-        </p>
+      <div class="diagram-container">
+        <svg width="340" height="100" viewBox="0 0 340 100">
+          <line x1="20" y1="50" x2="320" y2="50" stroke="#555" stroke-width="1"/>
+          <text x="20" y="70" fill="#a1a1a6" font-size="9">10</text>
+          <text x="95" y="70" fill="#a1a1a6" font-size="9">14</text>
+          <text x="170" y="70" fill="#a1a1a6" font-size="9">17</text>
+          <text x="245" y="70" fill="#a1a1a6" font-size="9">20</text>
+          <text x="320" y="70" fill="#a1a1a6" font-size="9">24円</text>
+          <!-- Data points -->
+          <rect x="20" y="30" width="60" height="15" rx="3" fill="#30d158" opacity="0.4"/>
+          <text x="50" y="25" text-anchor="middle" fill="#30d158" font-size="8">PPA契約</text>
+          <rect x="110" y="30" width="90" height="15" rx="3" fill="#2997ff" opacity="0.4"/>
+          <text x="155" y="25" text-anchor="middle" fill="#2997ff" font-size="8">特別高圧実績</text>
+          <rect x="225" y="30" width="55" height="15" rx="3" fill="#ff9f0a" opacity="0.4"/>
+          <text x="253" y="25" text-anchor="middle" fill="#ff9f0a" font-size="8">高圧</text>
+          <circle cx="245" cy="50" r="5" fill="#ff453a"/>
+          <text x="245" y="90" text-anchor="middle" fill="#ff453a" font-size="9">現行20円</text>
+          <circle cx="170" cy="50" r="5" fill="#30d158"/>
+          <text x="170" y="90" text-anchor="middle" fill="#30d158" font-size="9">推奨17円</text>
+        </svg>
       </div>
-      <div class="card" style="padding:20px; background:rgba(41,151,255,0.06); border-color:rgba(41,151,255,0.15);">
-        <p class="desc" style="font-size:14px;">
-          <strong style="color:var(--accent-blue);">コスト関数全体の信頼性:</strong>
-          減価償却（HIGH）が費用の60%を占めるため、コスト合計の精度は中程度。ただし欠落項目（SWライセンス、冗長性インフラ、スペアパーツ等）により総コストは20-55%過少評価の可能性がある。
-        </p>
+      <p class="desc" style="font-size:11px;">特別高圧(2025/09実績): 16.91円/kWh。<br>再エネ賦課金3.98円込み。DC向け契約: 15-18円</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <strong style="font-size:15px; color:var(--accent-blue);">WACC = 8% → 維持</strong>
+        <span class="confidence-badge badge-medium" style="margin-left:auto;">MED</span>
       </div>
+      <div class="diagram-container">
+        <svg width="340" height="100" viewBox="0 0 340 100">
+          <line x1="20" y1="50" x2="320" y2="50" stroke="#555" stroke-width="1"/>
+          <text x="20" y="70" fill="#a1a1a6" font-size="9">0%</text>
+          <text x="95" y="70" fill="#a1a1a6" font-size="9">5%</text>
+          <text x="170" y="70" fill="#a1a1a6" font-size="9">8%</text>
+          <text x="245" y="70" fill="#a1a1a6" font-size="9">12%</text>
+          <text x="320" y="70" fill="#a1a1a6" font-size="9">15%</text>
+          <!-- Ranges -->
+          <rect x="30" y="30" width="50" height="15" rx="3" fill="#2997ff" opacity="0.4"/>
+          <text x="55" y="25" text-anchor="middle" fill="#2997ff" font-size="8">GMO連結</text>
+          <rect x="110" y="30" width="80" height="15" rx="3" fill="#30d158" opacity="0.4"/>
+          <text x="150" y="25" text-anchor="middle" fill="#30d158" font-size="8">Equinix</text>
+          <rect x="195" y="30" width="75" height="15" rx="3" fill="#ff9f0a" opacity="0.4"/>
+          <text x="233" y="25" text-anchor="middle" fill="#ff9f0a" font-size="8">ベンチャーDC</text>
+          <circle cx="170" cy="50" r="5" fill="#30d158"/>
+          <text x="170" y="90" text-anchor="middle" fill="#30d158" font-size="9">8% (維持)</text>
+        </svg>
+      </div>
+      <p class="desc" style="font-size:11px;">GMO連結WACC ~2.4%(金融事業レバレッジ歪み)。<br>Equinix 7-9%、DC新規ベンチャー 9-13%。8%は妥当</p>
+    </div>
+    <div class="card" style="padding:16px;">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px;">
+        <strong style="font-size:15px; color:var(--accent-red);">β_B300 = 1.8x → 推奨 1.5x</strong>
+        <span class="confidence-badge badge-low" style="margin-left:auto;">LOW</span>
+      </div>
+      <div class="diagram-container">
+        <svg width="340" height="100" viewBox="0 0 340 100">
+          <line x1="20" y1="50" x2="320" y2="50" stroke="#555" stroke-width="1"/>
+          <text x="20" y="70" fill="#a1a1a6" font-size="9">1.0x</text>
+          <text x="95" y="70" fill="#a1a1a6" font-size="9">1.3x</text>
+          <text x="170" y="70" fill="#a1a1a6" font-size="9">1.5x</text>
+          <text x="245" y="70" fill="#a1a1a6" font-size="9">1.8x</text>
+          <text x="320" y="70" fill="#a1a1a6" font-size="9">2.0x</text>
+          <!-- Actual pricing range -->
+          <rect x="80" y="30" width="110" height="15" rx="3" fill="#2997ff" opacity="0.4"/>
+          <text x="135" y="25" text-anchor="middle" fill="#2997ff" font-size="8">市場実勢価格</text>
+          <rect x="95" y="17" width="40" height="10" rx="2" fill="#64d2ff" opacity="0.3"/>
+          <text x="115" y="13" text-anchor="middle" fill="#64d2ff" font-size="7">B200</text>
+          <!-- Current & recommended -->
+          <circle cx="245" cy="50" r="5" fill="#ff453a"/>
+          <text x="245" y="90" text-anchor="middle" fill="#ff453a" font-size="9">現行1.8x</text>
+          <circle cx="170" cy="50" r="5" fill="#30d158"/>
+          <text x="170" y="90" text-anchor="middle" fill="#30d158" font-size="9">推奨1.5x</text>
+        </svg>
+      </div>
+      <p class="desc" style="font-size:11px;">B300実勢: $3.5-6/hr vs H200 $2.5-4.3/hr = <strong>1.4-1.5x</strong>。<br>性能2x / 電力1.57x → 性能/W = 1.3-1.6x。1.8xは過大</p>
     </div>
   </div>
-  <div class="slide-number">08 / 15</div>
+  <div class="slide-number">11 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 6: DCF Layer ==================== -->
@@ -956,7 +1469,7 @@ IRR: NPV(r)=0 を解く
       </p>
     </div>
   </div>
-  <div class="slide-number">09 / 15</div>
+  <div class="slide-number">12 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 7: Monte Carlo ==================== -->
@@ -1045,7 +1558,120 @@ IRR: NPV(r)=0 を解く
       </div>
     </div>
   </div>
-  <div class="slide-number">10 / 15</div>
+  <div class="slide-number">13 / 19</div>
+</div>
+
+<!-- ==================== SLIDE 7b: Confidence Intervals ==================== -->
+<div class="slide" id="slide-7b">
+  <span class="tag tag-purple">Confidence Intervals</span>
+  <h2>全パラメータの信頼区間と推定方法数</h2>
+  <div class="diagram-container">
+    <svg width="880" height="440" viewBox="0 0 880 440">
+      <text x="440" y="20" text-anchor="middle" fill="#a1a1a6" font-size="12">各パラメータの推定レンジ（複数手法の統合結果）</text>
+
+      <!-- Column headers -->
+      <text x="120" y="50" text-anchor="end" fill="#a1a1a6" font-size="11" font-weight="600">パラメータ</text>
+      <text x="280" y="50" text-anchor="middle" fill="#a1a1a6" font-size="11" font-weight="600">推定レンジ</text>
+      <text x="530" y="50" text-anchor="middle" fill="#a1a1a6" font-size="11" font-weight="600">信頼区間（視覚化）</text>
+      <text x="740" y="50" text-anchor="middle" fill="#a1a1a6" font-size="11" font-weight="600">手法数</text>
+      <text x="820" y="50" text-anchor="middle" fill="#a1a1a6" font-size="11" font-weight="600">信頼度</text>
+      <line x1="20" y1="58" x2="860" y2="58" stroke="#333" stroke-width="1"/>
+
+      <!-- Row 1: δ -->
+      <text x="120" y="82" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">δ 価格下落率</text>
+      <text x="280" y="82" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">25-40%/年</text>
+      <rect x="430" y="70" width="200" height="16" rx="4" fill="#2997ff" opacity="0.15"/>
+      <rect x="470" y="70" width="120" height="16" rx="4" fill="#2997ff" opacity="0.4"/>
+      <circle cx="530" cy="78" r="4" fill="#2997ff"/>
+      <text x="530" y="95" text-anchor="middle" fill="#2997ff" font-size="9">中央30%</text>
+      <text x="740" y="82" text-anchor="middle" fill="#30d158" font-size="14" font-weight="700">4</text>
+      <rect x="795" y="70" width="50" height="18" rx="6" fill="rgba(48,209,88,0.15)"/>
+      <text x="820" y="83" text-anchor="middle" fill="#30d158" font-size="10" font-weight="600">HIGH</text>
+
+      <!-- Row 2: g_d -->
+      <text x="120" y="122" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">g_d 需要成長率</text>
+      <text x="280" y="122" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">25-70%/年</text>
+      <rect x="410" y="110" width="240" height="16" rx="4" fill="#ff9f0a" opacity="0.15"/>
+      <rect x="450" y="110" width="100" height="16" rx="4" fill="#ff9f0a" opacity="0.4"/>
+      <circle cx="500" cy="118" r="4" fill="#ff9f0a"/>
+      <text x="500" y="135" text-anchor="middle" fill="#ff9f0a" font-size="9">中央40%</text>
+      <text x="740" y="122" text-anchor="middle" fill="#30d158" font-size="14" font-weight="700">4</text>
+      <rect x="795" y="110" width="50" height="18" rx="6" fill="rgba(255,159,10,0.15)"/>
+      <text x="820" y="123" text-anchor="middle" fill="#ff9f0a" font-size="10" font-weight="600">MED</text>
+
+      <!-- Row 3: g_s -->
+      <text x="120" y="162" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">g_s 供給成長率</text>
+      <text x="280" y="162" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">25-100%/年</text>
+      <rect x="400" y="150" width="280" height="16" rx="4" fill="#ff453a" opacity="0.15"/>
+      <rect x="440" y="150" width="80" height="16" rx="4" fill="#ff453a" opacity="0.4"/>
+      <circle cx="478" cy="158" r="4" fill="#ff453a"/>
+      <text x="478" y="175" text-anchor="middle" fill="#ff453a" font-size="9">中央35-40%</text>
+      <text x="740" y="162" text-anchor="middle" fill="#ff9f0a" font-size="14" font-weight="700">4</text>
+      <rect x="795" y="150" width="50" height="18" rx="6" fill="rgba(255,69,58,0.15)"/>
+      <text x="820" y="163" text-anchor="middle" fill="#ff453a" font-size="10" font-weight="600">LOW</text>
+
+      <!-- Row 4: U₀ -->
+      <text x="120" y="202" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">U₀ 初期稼働率</text>
+      <text x="280" y="202" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">60-85%</text>
+      <rect x="440" y="190" width="130" height="16" rx="4" fill="#ff9f0a" opacity="0.15"/>
+      <rect x="470" y="190" width="70" height="16" rx="4" fill="#ff9f0a" opacity="0.4"/>
+      <circle cx="505" cy="198" r="4" fill="#ff9f0a"/>
+      <text x="505" y="215" text-anchor="middle" fill="#ff9f0a" font-size="9">中央75%</text>
+      <text x="740" y="202" text-anchor="middle" fill="#30d158" font-size="14" font-weight="700">3</text>
+      <rect x="795" y="190" width="50" height="18" rx="6" fill="rgba(255,159,10,0.15)"/>
+      <text x="820" y="203" text-anchor="middle" fill="#ff9f0a" font-size="10" font-weight="600">MED</text>
+
+      <!-- Row 5: α -->
+      <text x="120" y="242" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">α 競合感度</text>
+      <text x="280" y="242" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">0.010-0.035</text>
+      <rect x="430" y="230" width="170" height="16" rx="4" fill="#ff453a" opacity="0.15"/>
+      <rect x="460" y="230" width="60" height="16" rx="4" fill="#ff453a" opacity="0.4"/>
+      <circle cx="490" cy="238" r="4" fill="#ff453a"/>
+      <text x="490" y="255" text-anchor="middle" fill="#ff453a" font-size="9">中央0.015-0.020</text>
+      <text x="740" y="242" text-anchor="middle" fill="#ff9f0a" font-size="14" font-weight="700">3</text>
+      <rect x="795" y="230" width="50" height="18" rx="6" fill="rgba(255,69,58,0.15)"/>
+      <text x="820" y="243" text-anchor="middle" fill="#ff453a" font-size="10" font-weight="600">LOW</text>
+
+      <!-- Row 6: PUE -->
+      <text x="120" y="282" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">PUE</text>
+      <text x="280" y="282" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">1.10-1.35</text>
+      <rect x="450" y="270" width="100" height="16" rx="4" fill="#2997ff" opacity="0.15"/>
+      <rect x="470" y="270" width="50" height="16" rx="4" fill="#2997ff" opacity="0.4"/>
+      <circle cx="485" cy="278" r="4" fill="#2997ff"/>
+      <text x="485" y="295" text-anchor="middle" fill="#2997ff" font-size="9">中央1.20</text>
+      <text x="740" y="282" text-anchor="middle" fill="#30d158" font-size="14" font-weight="700">3</text>
+      <rect x="795" y="270" width="50" height="18" rx="6" fill="rgba(255,159,10,0.15)"/>
+      <text x="820" y="283" text-anchor="middle" fill="#ff9f0a" font-size="10" font-weight="600">MED</text>
+
+      <!-- Row 7: β_B300 -->
+      <text x="120" y="322" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">β B300プレミアム</text>
+      <text x="280" y="322" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">1.3-1.7x</text>
+      <rect x="440" y="310" width="120" height="16" rx="4" fill="#ff453a" opacity="0.15"/>
+      <rect x="460" y="310" width="60" height="16" rx="4" fill="#ff453a" opacity="0.4"/>
+      <circle cx="490" cy="318" r="4" fill="#ff453a"/>
+      <text x="490" y="335" text-anchor="middle" fill="#ff453a" font-size="9">中央1.5x</text>
+      <text x="740" y="322" text-anchor="middle" fill="#ff9f0a" font-size="14" font-weight="700">2</text>
+      <rect x="795" y="310" width="50" height="18" rx="6" fill="rgba(255,69,58,0.15)"/>
+      <text x="820" y="323" text-anchor="middle" fill="#ff453a" font-size="10" font-weight="600">LOW</text>
+
+      <!-- Row 8: WACC -->
+      <text x="120" y="362" text-anchor="end" fill="#f5f5f7" font-size="13" font-weight="500">WACC</text>
+      <text x="280" y="362" text-anchor="middle" fill="#64d2ff" font-size="12" font-family="SF Mono, monospace">6-10%</text>
+      <rect x="450" y="350" width="100" height="16" rx="4" fill="#2997ff" opacity="0.15"/>
+      <rect x="470" y="350" width="50" height="16" rx="4" fill="#2997ff" opacity="0.4"/>
+      <circle cx="495" cy="358" r="4" fill="#2997ff"/>
+      <text x="495" y="375" text-anchor="middle" fill="#2997ff" font-size="9">中央8%</text>
+      <text x="740" y="362" text-anchor="middle" fill="#30d158" font-size="14" font-weight="700">3</text>
+      <rect x="795" y="350" width="50" height="18" rx="6" fill="rgba(255,159,10,0.15)"/>
+      <text x="820" y="363" text-anchor="middle" fill="#ff9f0a" font-size="10" font-weight="600">MED</text>
+
+      <!-- Summary -->
+      <line x1="20" y1="388" x2="860" y2="388" stroke="#333" stroke-width="1"/>
+      <text x="440" y="410" text-anchor="middle" fill="#a1a1a6" font-size="12">合計 <tspan fill="#30d158" font-weight="700">26手法</tspan> で8パラメータを交差検証。最大の不確実性は g_s（供給成長率）と β_B300</text>
+      <text x="440" y="430" text-anchor="middle" fill="#ff9f0a" font-size="11">※ 細い帯 = 全体レンジ、太い帯 = 中心50%信頼区間、● = 中央推定値</text>
+    </svg>
+  </div>
+  <div class="slide-number">14 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 8: Variable Map ==================== -->
@@ -1156,7 +1782,7 @@ IRR: NPV(r)=0 を解く
       <div><span class="confidence-badge badge-low">LOW</span></div>
     </div>
   </div>
-  <div class="slide-number">11 / 15</div>
+  <div class="slide-number">15 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 9: Tornado ==================== -->
@@ -1241,7 +1867,7 @@ IRR: NPV(r)=0 を解く
       NPVを最も左右する上位2パラメータ（供給・需要成長率）は、いずれも信頼度が低い
     </p>
   </div>
-  <div class="slide-number">12 / 15</div>
+  <div class="slide-number">16 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 10: Stress Test ==================== -->
@@ -1316,7 +1942,7 @@ IRR: NPV(r)=0 を解く
       <div style="font-size:11px; color:var(--text-secondary); margin-top:4px;">需要爆発<br>+供給制約</div>
     </div>
   </div>
-  <div class="slide-number">13 / 15</div>
+  <div class="slide-number">17 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 11: What we can / can't say ==================== -->
@@ -1369,7 +1995,7 @@ IRR: NPV(r)=0 を解く
       </div>
     </div>
   </div>
-  <div class="slide-number">14 / 15</div>
+  <div class="slide-number">18 / 19</div>
 </div>
 
 <!-- ==================== SLIDE 12: Summary ==================== -->
@@ -1411,7 +2037,7 @@ IRR: NPV(r)=0 を解く
       </p>
     </div>
   </div>
-  <div class="slide-number">15 / 15</div>
+  <div class="slide-number">19 / 19</div>
 </div>
 
 <!-- Navigation -->
