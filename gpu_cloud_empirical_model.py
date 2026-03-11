@@ -981,7 +981,268 @@ class MonteCarloSimulator:
 
 
 # =============================================================================
-# 6. メイン実行
+# 6. 感度分析（トルネードチャート）
+# =============================================================================
+
+class SensitivityAnalyzer:
+    """
+    各パラメータの影響度を定量化するトルネード分析。
+
+    方法:
+    1. ベースケース（全パラメータ中央値）のNPVを算出
+    2. 各パラメータを1つずつ上限/下限に振り、NPV変化を測定
+    3. NPV変動幅でパラメータをランキング
+    → どのパラメータが結果を最も左右するかを可視化
+    """
+
+    def __init__(self, years: int = 10):
+        self.years = years
+
+    def run(self) -> dict:
+        params = create_calibrated_params()
+
+        # ベースケースNPV
+        base_model = EmpiricalGPUCloudModel(params=params)
+        base_npv = base_model.npv(self.years)
+        base_irr = base_model.irr(self.years)
+
+        sensitivities = []
+
+        for key, param in params.items():
+            # 下限ケース
+            sampled_low = {k: v.central for k, v in params.items()}
+            sampled_low[key] = param.ci_low
+            model_low = EmpiricalGPUCloudModel(params=params, sampled_values=sampled_low)
+            npv_low = model_low.npv(self.years)
+
+            # 上限ケース
+            sampled_high = {k: v.central for k, v in params.items()}
+            sampled_high[key] = param.ci_high
+            model_high = EmpiricalGPUCloudModel(params=params, sampled_values=sampled_high)
+            npv_high = model_high.npv(self.years)
+
+            swing = abs(npv_high - npv_low)
+
+            sensitivities.append({
+                'param': key,
+                'name': param.name,
+                'confidence': param.confidence,
+                'base_value': param.central,
+                'low_value': param.ci_low,
+                'high_value': param.ci_high,
+                'npv_at_low': npv_low,
+                'npv_at_high': npv_high,
+                'npv_swing': swing,
+                'npv_pct_swing': swing / abs(base_npv) * 100 if base_npv != 0 else float('inf'),
+            })
+
+        # NPV変動幅でソート（降順）
+        sensitivities.sort(key=lambda x: x['npv_swing'], reverse=True)
+
+        return {
+            'base_npv': base_npv,
+            'base_irr': base_irr,
+            'sensitivities': sensitivities,
+        }
+
+
+# =============================================================================
+# 7. ストレステスト（極端シナリオ分析）
+# =============================================================================
+
+class StressTestAnalyzer:
+    """
+    極端シナリオ下でのモデルの堅牢性を検証。
+
+    シナリオ:
+    1. 価格崩壊: AWS/GCPが50%値下げ + 供給過多
+    2. 需要蒸発: 推論効率10x改善 + 景気後退
+    3. コスト爆発: 電力高騰 + NVIDIA値上げ + 為替円安
+    4. 複合最悪: 上記すべて同時発生
+    5. 楽観シナリオ: 需要爆発 + 供給制約 + 円高
+    """
+
+    SCENARIOS = {
+        'price_collapse': {
+            'label': '価格崩壊シナリオ',
+            'description': 'ハイパースケーラー50%値下げ＋供給過多',
+            'overrides': {
+                'delta_price': 0.30,       # 年30%下落
+                'g_supply': 0.55,          # 供給急増
+                'alpha_util': 0.035,       # 競合激化
+            }
+        },
+        'demand_evaporation': {
+            'label': '需要蒸発シナリオ',
+            'description': '推論効率10x改善＋景気後退',
+            'overrides': {
+                'g_demand': 0.05,          # 実効需要ほぼ停滞
+                'U_0': 0.55,              # 初期稼働率も低い
+                'U_min': 0.15,            # 最低稼働率も低い
+            }
+        },
+        'cost_explosion': {
+            'label': 'コスト爆発シナリオ',
+            'description': '電力高騰＋NVIDIA値上げ＋円安',
+            'overrides': {
+                'electricity_rate': 28.0,   # 電力高騰
+                'software_license': 5.0,    # NVIDIAライセンス高額
+                'pue': 1.45,               # PUE悪化
+            }
+        },
+        'combined_worst': {
+            'label': '複合最悪シナリオ',
+            'description': '全リスク同時顕在化',
+            'overrides': {
+                'delta_price': 0.28,
+                'g_supply': 0.50,
+                'g_demand': 0.08,
+                'U_0': 0.50,
+                'U_min': 0.15,
+                'alpha_util': 0.035,
+                'electricity_rate': 26.0,
+                'software_license': 4.5,
+            }
+        },
+        'optimistic': {
+            'label': '楽観シナリオ',
+            'description': '需要爆発＋供給制約＋コスト安',
+            'overrides': {
+                'delta_price': 0.08,
+                'g_demand': 0.40,
+                'g_supply': 0.20,
+                'U_0': 0.90,
+                'U_min': 0.50,
+                'alpha_util': 0.005,
+                'electricity_rate': 16.0,
+                'software_license': 0.5,
+            }
+        },
+    }
+
+    def __init__(self, years: int = 10):
+        self.years = years
+
+    def run(self) -> dict:
+        params = create_calibrated_params()
+        results = {}
+
+        for scenario_id, scenario in self.SCENARIOS.items():
+            sampled = {k: v.central for k, v in params.items()}
+            sampled.update(scenario['overrides'])
+
+            model = EmpiricalGPUCloudModel(params=params, sampled_values=sampled)
+
+            try:
+                npv_val = model.npv(self.years)
+                irr_val = model.irr(self.years)
+                pb_val = model.payback_period(self.years + 5)
+                rev_y1 = model.annual_revenue(1)
+                rev_y5 = model.annual_revenue(5)
+                util_y1 = model.utilization(1)
+                util_y5 = model.utilization(5)
+                fcf_y1 = model.annual_fcf(1)
+            except Exception as e:
+                npv_val = irr_val = pb_val = None
+                rev_y1 = rev_y5 = util_y1 = util_y5 = fcf_y1 = None
+
+            results[scenario_id] = {
+                'label': scenario['label'],
+                'description': scenario['description'],
+                'npv': npv_val,
+                'irr': irr_val,
+                'payback': pb_val,
+                'revenue_y1': rev_y1,
+                'revenue_y5': rev_y5,
+                'utilization_y1': util_y1,
+                'utilization_y5': util_y5,
+                'fcf_y1': fcf_y1,
+            }
+
+        return results
+
+
+# =============================================================================
+# 8. 為替変動リスクモデル
+# =============================================================================
+
+class FXRiskAnalyzer:
+    """
+    USD/JPY変動がGPU事業に与える影響を分析。
+
+    GPUクラウド事業の為替エクスポージャー:
+    - 収入: 円建て（国内顧客）
+    - GPU調達: USD建て（NVIDIA）→ 為替リスク大
+    - 電力・人件費: 円建て
+    - ソフトウェア: USD建て（NVIDIA AI Enterprise等）
+
+    → 円安はCAPEX・ライセンスコスト増、円高は設備投資に有利
+    """
+
+    # USD/JPY シナリオ
+    FX_SCENARIOS = {
+        'strong_yen':     {'rate': 120, 'label': '円高 (120円/$)'},
+        'moderate_yen':   {'rate': 135, 'label': 'やや円高 (135円/$)'},
+        'current':        {'rate': 150, 'label': '現状維持 (150円/$)'},
+        'moderate_weak':  {'rate': 165, 'label': 'やや円安 (165円/$)'},
+        'weak_yen':       {'rate': 180, 'label': '円安 (180円/$)'},
+    }
+
+    BASE_FX = 150.0  # 現在の前提レート
+
+    def __init__(self, years: int = 10):
+        self.years = years
+
+    def adjust_for_fx(self, fx_rate: float) -> dict:
+        """
+        為替レート変動の影響を反映したパラメータ調整。
+
+        影響チャネル:
+        1. GPU価格（月額）: USD建て原価 → 円安で割高 or 値下げ圧力
+        2. CAPEX: GPU調達はUSD建て → 為替直撃
+        3. ソフトウェアライセンス: USD建て
+        4. 収入: 円建て（変動なし、ただし競争力変動）
+        """
+        fx_ratio = fx_rate / self.BASE_FX  # >1なら円安、<1なら円高
+
+        params = create_calibrated_params()
+        sampled = {k: v.central for k, v in params.items()}
+
+        # ソフトウェアライセンスはUSD建て → 為替直撃
+        sampled['software_license'] = params['software_license'].central * fx_ratio
+
+        # GPU月額は国内市場で調整遅れがある（為替パススルー率60%と仮定）
+        passthrough = 0.60
+        price_adj = 1 + (fx_ratio - 1) * passthrough
+        sampled['P_0'] = params['P_0'].central * price_adj
+
+        model = EmpiricalGPUCloudModel(params=params, sampled_values=sampled)
+
+        # CAPEXも為替影響を受ける（既存契約は固定だが追加投資時）
+        capex_adj = fx_ratio
+        model.capex_additional = 15.0 * capex_adj
+        model.capex_b300 = 30.0 * capex_adj
+
+        return {
+            'fx_rate': fx_rate,
+            'fx_ratio': fx_ratio,
+            'npv': model.npv(self.years),
+            'irr': model.irr(self.years),
+            'payback': model.payback_period(self.years + 5),
+            'revenue_y1': model.annual_revenue(1),
+            'fcf_y1': model.annual_fcf(1),
+        }
+
+    def run(self) -> dict:
+        results = {}
+        for scenario_id, scenario in self.FX_SCENARIOS.items():
+            results[scenario_id] = self.adjust_for_fx(scenario['rate'])
+            results[scenario_id]['label'] = scenario['label']
+        return results
+
+
+# =============================================================================
+# 9. メイン実行
 # =============================================================================
 
 def validate_against_actuals():
@@ -1340,6 +1601,154 @@ def main():
 
     # ─── Step 7: クロスバリデーション ───
     passes, total = validate_against_actuals()
+
+    # ─── Step 8: 感度分析（トルネードチャート）───
+    print("\n" + "=" * 80)
+    print("6. 感度分析（トルネードチャート）")
+    print("=" * 80)
+
+    sa = SensitivityAnalyzer(years=10)
+    sa_results = sa.run()
+
+    print(f"\n  ベースケースNPV: {sa_results['base_npv']:.1f}億円")
+    print(f"\n  {'順位':>4} | {'パラメータ':<30} | {'信頼度':>6} | {'下限→NPV':>10} | {'上限→NPV':>10} | {'変動幅':>8} | {'影響度':>7}")
+    print("  " + "-" * 100)
+
+    for i, s in enumerate(sa_results['sensitivities'][:12]):
+        print(f"  {i+1:>4} | {s['name']:<30} | {s['confidence']:>6} | "
+              f"{s['npv_at_low']:>9.1f}億 | {s['npv_at_high']:>9.1f}億 | "
+              f"{s['npv_swing']:>7.1f}億 | {s['npv_pct_swing']:>6.0f}%")
+
+    # 信頼度×影響度マトリクス
+    print(f"\n  ━━━ リスクマトリクス（信頼度×影響度）━━━")
+    print(f"  【要注意】信頼度LOWかつ影響度大のパラメータ:")
+    high_risk = [s for s in sa_results['sensitivities']
+                 if s['confidence'] == 'low' and s['npv_swing'] > 10]
+    for s in high_risk:
+        print(f"    ⚠ {s['name']}: 変動幅{s['npv_swing']:.1f}億円 "
+              f"(NPVの{s['npv_pct_swing']:.0f}%)")
+    if not high_risk:
+        print(f"    → 該当なし")
+
+    print(f"  【安定】信頼度HIGHかつ影響度大のパラメータ:")
+    stable = [s for s in sa_results['sensitivities'][:5]
+              if s['confidence'] == 'high']
+    for s in stable:
+        print(f"    ✓ {s['name']}: 変動幅{s['npv_swing']:.1f}億円（実績値で校正済み）")
+    if not stable:
+        print(f"    → 上位5パラメータにHIGH信頼度なし（リスク要因）")
+
+    # ─── Step 9: ストレステスト ───
+    print("\n" + "=" * 80)
+    print("7. ストレステスト（極端シナリオ分析）")
+    print("=" * 80)
+
+    st = StressTestAnalyzer(years=10)
+    st_results = st.run()
+
+    print(f"\n  {'シナリオ':<24} | {'NPV(億)':>8} | {'IRR':>6} | {'回収(年)':>7} | {'売上Y1':>7} | {'稼働Y1':>6}")
+    print("  " + "-" * 75)
+
+    for scenario_id, r in st_results.items():
+        irr_str = f"{r['irr']*100:.1f}%" if r['irr'] is not None else "N/A"
+        pb_str = f"{r['payback']:.1f}" if r['payback'] is not None else ">15"
+        util_str = f"{r['utilization_y1']*100:.1f}%" if r['utilization_y1'] is not None else "N/A"
+        print(f"  {r['label']:<24} | {r['npv']:>8.1f} | {irr_str:>6} | {pb_str:>7} | "
+              f"{r['revenue_y1']:>6.1f}億 | {util_str:>6}")
+
+    # 生存ライン分析
+    print(f"\n  ━━━ 生存ライン分析 ━━━")
+    base_npv = sa_results['base_npv']
+    worst = st_results.get('combined_worst', {})
+    optimistic = st_results.get('optimistic', {})
+
+    if worst.get('npv') is not None:
+        print(f"  最悪ケースNPV:     {worst['npv']:.1f}億円")
+        if worst['npv'] < -100:
+            print(f"  → 累積損失100億超。事業撤退リスクが顕在化する水準")
+        elif worst['npv'] < 0:
+            print(f"  → 投資回収不能だが致命的ではない。損切りラインの設定推奨")
+
+    if optimistic.get('npv') is not None:
+        print(f"  楽観ケースNPV:     {optimistic['npv']:.1f}億円")
+        print(f"  NPVレンジ:         [{worst.get('npv', 0):.1f}, {optimistic['npv']:.1f}] 億円")
+
+    # ─── Step 10: 為替リスク分析 ───
+    print("\n" + "=" * 80)
+    print("8. 為替変動リスク分析 (USD/JPY)")
+    print("=" * 80)
+
+    fx = FXRiskAnalyzer(years=10)
+    fx_results = fx.run()
+
+    print(f"\n  前提: GPU調達・ソフトウェアはUSD建て、売上は円建て")
+    print(f"  為替パススルー率: 60%（価格転嫁の遅延・限界を反映）\n")
+
+    print(f"  {'シナリオ':<24} | {'NPV(億)':>8} | {'IRR':>6} | {'回収(年)':>7} | {'売上Y1':>7} | {'FCF Y1':>7}")
+    print("  " + "-" * 75)
+
+    for scenario_id, r in fx_results.items():
+        irr_str = f"{r['irr']*100:.1f}%" if r['irr'] is not None else "N/A"
+        pb_str = f"{r['payback']:.1f}" if r['payback'] is not None else ">15"
+        print(f"  {r['label']:<24} | {r['npv']:>8.1f} | {irr_str:>6} | {pb_str:>7} | "
+              f"{r['revenue_y1']:>6.1f}億 | {r['fcf_y1']:>6.1f}億")
+
+    # 為替感度
+    current_npv = fx_results['current']['npv']
+    yen_10_impact = fx_results['moderate_weak']['npv'] - current_npv
+    print(f"\n  ━━━ 為替感度 ━━━")
+    print(f"  10円円安のNPV影響:  {yen_10_impact:+.1f}億円 "
+          f"({yen_10_impact/abs(current_npv)*100:+.1f}%)")
+    yen_strong_impact = fx_results['strong_yen']['npv'] - current_npv
+    print(f"  30円円高のNPV影響:  {yen_strong_impact:+.1f}億円 "
+          f"({yen_strong_impact/abs(current_npv)*100:+.1f}%)")
+
+    # 為替ヘッジ推奨
+    print(f"\n  ━━━ 為替リスク管理の示唆 ━━━")
+    print(f"  1. USD建てCAPEX（追加投資45億円）: 為替予約でヘッジ推奨")
+    print(f"  2. NVIDIAライセンス: 年額2億円のUSDエクスポージャー")
+    print(f"  3. 円安30円でNPV {fx_results['weak_yen']['npv'] - current_npv:+.1f}億円の影響")
+    print(f"     → 初期投資は契約済みのため為替固定。追加投資・ライセンスが変動リスク")
+
+    # ─── Step 11: 総合信頼性評価 ───
+    print("\n" + "=" * 80)
+    print("9. 総合信頼性評価サマリ")
+    print("=" * 80)
+
+    print(f"""
+  ━━━ モデル改善状況 ━━━
+
+  改善前の5つの限界への対応:
+
+  1. 需要成長率(g_demand)の不確実性
+     → 感度分析で影響度を定量化。ストレステスト「需要蒸発」で極端ケースを検証
+     → 推論効率改善の影響は g_demand=5% シナリオで織り込み済み
+
+  2. 供給成長率(g_supply)の間接推定リスク
+     → 感度分析でNPVへの影響度を測定
+     → ストレステスト「価格崩壊」で供給過多の極端ケースを検証
+
+  3. ソフトウェアライセンスの不確実性
+     → 感度分析で0.5→5.0億のレンジ影響を測定
+     → ストレステスト「コスト爆発」で5.0億ケースを検証
+
+  4. クロスバリデーションのサンプルサイズ
+     → 現時点ではCoreWeave+さくらの2社が限界
+     → Equinix・QTSなどDC事業の長期データとの比較は今後の課題
+
+  5. 日本市場の為替リスク
+     → 為替変動分析（120-180円/ドル）を新規追加
+     → 為替パススルー率60%で国内価格硬直性をモデル化
+     → ヘッジ戦略の示唆を提供
+
+  ━━━ モデルの信頼性レベル ━━━
+
+  [実績校正済み]  H100価格減衰（R²=0.98）、費用構造（CoreWeave整合）
+  [感度測定済み]  全{len(sa_results['sensitivities'])}パラメータの影響度を定量化
+  [ストレス済み]  5シナリオで堅牢性を検証
+  [為替対応済み]  120-180円/ドルのレンジで影響を定量化
+  [バリデーション] {passes}/{total}項目合格（{passes/total*100:.0f}%）
+    """)
 
     return model, mc_results
 
